@@ -1,0 +1,69 @@
+/* Main planned actions container */
+.planned-action-panel {
+    background-color: #404040; /* Light gray background */
+    color: black;
+    padding: 20px; /* Increased padding for the entire panel */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure it takes full height of the column */
+    box-sizing: border-box;
+}
+
+/* Header styling */
+.planned-action-panel h2 {
+    margin: 0 0 20px 0; /* Increased bottom margin for spacing */
+    color: black;
+    font-size: 1.5rem; /* Larger font size for the header */
+    padding: 10px; /* Added padding to the header */
+    background-color: #ddd; /* Optional: Slightly lighter background */
+    border-radius: 5px; /* Rounded corners for the header */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    text-align: center;
+}
+
+/* Sub-container for queue elements */
+.sub-container {
+    background-color: #ddd; /* Light gray background for the queue container */
+    border-radius: 10px; /* Rounded corners */
+    padding: 20px; /* Increased padding for the queue container */
+    flex: 1; /* Ensures the sub-container takes the remaining space */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spacing between queue items */
+    overflow-y: auto; /* Scrollable if content exceeds height */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Added shadow for the queue container */
+}
+
+/* Queue item styling */
+.queue-item {
+    background-color: #eee; /* Slightly lighter gray for individual items */
+    border-radius: 5px;
+    padding: 15px; /* Added padding for the queue items */
+    color: black;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for individual items */
+}
+
+.queue-item h3 {
+    margin: 0 0 10px 0; /* Added bottom margin for spacing */
+    font-size: 1.2rem; /* Slightly larger font size */
+    color: #333; /* Darker text for better contrast */
+}
+
+.queue-item ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.queue-item ul li {
+    margin: 5px 0;
+    color: #666;
+}
+
+/* Placeholder text for empty queue */
+.queue-item p {
+    color: #999;
+    font-style: italic;
+    margin: 0;
+    text-align: center;
+}

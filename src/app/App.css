@@ -1,0 +1,26 @@
+.app {
+    display: grid;
+    grid-template-columns: 70px 30% auto; /* Menu, Planned Actions, Display & Chat */
+    grid-template-rows: 50% 50%; /* Display occupies 65%, Chat occupies 35% */
+    height: 100vh;
+}
+
+.menu-panel {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+}
+
+.planned-action-panel {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+}
+
+.display-panel {
+    grid-column: 3 / 4;
+    grid-row: 1 / 2;
+}
+
+.chat-panel {
+    grid-column: 3 / 4;
+    grid-row: 2 / 3;
+}

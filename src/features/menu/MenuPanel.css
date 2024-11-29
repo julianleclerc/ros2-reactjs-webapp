@@ -1,0 +1,63 @@
+/* Menu panel container */
+.menu-panel {
+    background-color: #333; /* Dark gray background */
+    color: white;
+    padding: 20px; /* Padding around the panel */
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center the buttons horizontally */
+    height: 100%; /* Full height of the panel */
+    box-sizing: border-box;
+    gap: 20px; /* Space between buttons */
+}
+
+/* Menu button styling */
+.menu-panel button {
+    width: 100%; /* Make buttons fill the available width */
+    max-width: 200px; /* Limit button width */
+    padding: 10px 20px; /* Padding inside buttons */
+    border: none;
+    border-radius: 5px; /* Rounded corners for buttons */
+    background-color: #666; /* Default lighter gray background */
+    color: white;
+    font-size: 1rem; /* Standard font size */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    position: relative; /* For tooltip positioning */
+}
+
+/* Active button stays darkened */
+.menu-panel button.active {
+    background-color: #444 !important; /* Darker gray for active button */
+    color: white; /* Ensure text remains visible */
+}
+
+/* Button hover effect */
+.menu-panel button:hover {
+    background-color: #555; /* Slightly darker gray on hover */
+    transform: scale(1.02); /* Slight scale effect on hover */
+}
+
+/* Tooltip styling */
+.menu-panel button::after {
+    content: attr(data-tooltip); /* Tooltip text from data attribute */
+    position: absolute;
+    top: 50%; /* Vertically align to the middle of the button */
+    left: 105%; /* Position tooltip slightly to the right of the button */
+    transform: translateY(-50%); /* Adjust for vertical centering */
+    background-color: black;
+    color: white;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 5px;
+    white-space: nowrap; /* Prevent text wrapping */
+    opacity: 0; /* Hidden by default */
+    pointer-events: none; /* Ignore pointer events for tooltips */
+    transition: opacity 0.3s ease;
+    z-index: 100; /* Ensure tooltip appears on top */
+}
+
+/* Show tooltip on hover */
+.menu-panel button:hover::after {
+    opacity: 1; /* Make tooltip visible */
+}

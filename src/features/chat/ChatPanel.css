@@ -1,0 +1,141 @@
+.chat-panel {
+    display: flex;
+    justify-content: center; /* Center the inner container horizontally */
+    align-items: center; /* Center vertically */
+    background-color: #303030; /* Background color for the main container */
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent overflow from internal components */
+}
+
+/* Chat container (fixed size) */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff; /* Contrast background for inner container */
+    padding: 20px;
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    width: 95%; /* Occupy 95% of the main container's width */
+    max-width: 1400px; /* Limit the width for very large screens */
+    height: 90%; /* Occupy 90% of the main container's height */
+    max-height: 800px; /* Limit the height */
+    box-sizing: border-box;
+    overflow: hidden; /* Prevent internal overflow */
+    flex-shrink: 0; /* Prevent the container from shrinking */
+}
+
+/* Tab container */
+.tab-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px; /* Add spacing between tabs */
+    height: 50px; /* Fixed height for tabs */
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    flex-shrink: 0; /* Prevent tabs from affecting container size */
+}
+
+.add-tab-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 50%;
+    background-color: #666;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.add-tab-button:hover {
+    background-color: #555;
+}
+
+.tabs-scrollable {
+    display: flex;
+    overflow-x: auto; /* Horizontal scrolling for tabs */
+    flex: 1; /* Take remaining space in the tab container */
+    gap: 15px; /* Add spacing between tabs */
+}
+
+/* Tab buttons */
+.tab-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #666;
+    color: white;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.3s ease;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+.tab-button:hover {
+    background-color: #555;
+}
+
+.active-tab {
+    background-color: #333; /* Highlight active tab */
+}
+
+/* Chat log */
+.chat-log {
+    flex: 1; /* Take up all available space below tabs */
+    overflow-y: auto; /* Scroll vertically if content exceeds height */
+    background-color: #eee;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.chat-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-log::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+.chat-log::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa;
+}
+
+.chat-log p {
+    margin: 5px 0;
+}
+
+/* Chat input container */
+.chat-input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0; /* Prevent shrinking */
+    height: 60px; /* Fixed height for input */
+}
+
+.chat-input-container input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.chat-input-container button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #666;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.chat-input-container button:hover {
+    background-color: #444;
+}
+
