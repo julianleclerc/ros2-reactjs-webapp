@@ -22,7 +22,6 @@ const PlannedActionPanel = () => {
 
     return (
         <div className="planned-action-panel">
-            <h2>Planned Actions</h2>
             <div className="sub-container">
                 {queue.length === 0 ? (
                     <div className="queue-item">

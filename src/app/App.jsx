@@ -1,24 +1,30 @@
-import React from 'react';
-import './App.css';
-import ChatPanel from '../features/chat/ChatPanel';
-import MenuPanel from '../features/menu/MenuPanel';
-import PlannedActionPanel from '../features/plannedActions/PlannedActionPanel';
-import DisplayPanel from '../features/display/DisplayPanel';
+import React, { useState } from "react";
+import "./App.css";
+import MenuPanel from "../components/menu/MenuPanel";
+import ChatInterfacePage from "../pages/chatInterface/ChatInterfacePage";
+import ActionInterfacePage from "../pages/actionInterface/ActionInterfacePage";
 
 const App = () => {
+    const [currentPage, setCurrentPage] = useState("ChatInterfacePage");
+
+    const renderPage = () => {
+        switch (currentPage) {
+            case "ChatInterfacePage":
+                return <ChatInterfacePage />;
+            case "ActionInterfacePage":
+                return <ActionInterfacePage />;
+            default:
+                return <ChatInterfacePage />;
+        }
+    };
+
     return (
-        <div className="app">
-            <div className="menu-panel">
-                <MenuPanel />
+        <div style={{ display: "flex", minHeight: "100vh" }}>
+            <div className="nav">
+                <MenuPanel setPage={setCurrentPage} />
             </div>
-            <div className="planned-action-panel">
-                <PlannedActionPanel />
-            </div>
-            <div className="display-panel">
-                <DisplayPanel />
-            </div>
-            <div className="chat-panel">
-                <ChatPanel />
+            <div className="app">
+                {renderPage()}
             </div>
         </div>
     );

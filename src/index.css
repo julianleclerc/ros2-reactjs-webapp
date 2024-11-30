@@ -1,8 +1,9 @@
 /* index.css - Global styles for the application */
-body {
+html, body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    padding: 0;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 * {

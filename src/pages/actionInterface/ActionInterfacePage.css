@@ -1,0 +1,18 @@
+/* Page container */
+.action-interface-page {
+    display: flex; /* Use flexbox for simpler layout */
+    flex-direction: column; /* Stack children vertically */
+    width: 100%; /* Full available width */
+    background-color: #000000; /* Background color */
+    height: 100vh; /* Full viewport height */
+    box-sizing: border-box; /* Include padding and border in dimensions */
+}
+
+/* Planned Action Panel */
+.planned-action-panel {
+    flex: 1; /* Take all available space */
+    width: 100%; /* Ensure full width */
+    height: auto; /* Adjust height dynamically */
+    padding: 20px; /* Optional: Add padding */
+    box-sizing: border-box; /* Include padding and border in dimensions */
+}

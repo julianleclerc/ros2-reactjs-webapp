@@ -4,11 +4,11 @@
     color: white;
     padding: 20px; /* Padding around the panel */
     display: flex;
-    flex-direction: column; /* Stack buttons vertically */
-    align-items: center; /* Center the buttons horizontally */
-    height: 100%; /* Full height of the panel */
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
     box-sizing: border-box;
-    gap: 20px; /* Space between buttons */
+    gap: 20px; /* Space between items */
+    height: 100%; /* Take full height of the parent container */
 }
 
 /* Menu button styling */
