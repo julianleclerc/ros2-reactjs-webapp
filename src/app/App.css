@@ -1,26 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-
-body {
-  font-family: 'Roboto', sans-serif;
-}
-
+/* navigation side bar*/
 .nav {
-    width: 90px; /* Fixed width for the sidebar */
-    height: 100vh; /* Full height of the viewport */
+    width: 90px; 
+    height: 100vh; 
     display: flex;
-    flex-direction: column; /* Ensure vertical stacking */
-    background-color: #222; /* Optional: Sidebar container background */
+    flex-direction: column; 
+    background-color: #222;
 }
+
 
 .app {
-    display: flex; /* Flexbox layout for sidebar and content */
-    min-height: 100vh; /* Full height of the viewport */
-    flex: 1; /* Ensure it takes up remaining space */
+    display: flex; 
+    min-height: 100vh;
+    flex: 1;
 }
 
+/* page content */
 .page-content {
-    flex: 1; /* Take up remaining horizontal space */
-    padding: 20px; /* Optional: Add spacing */
-    overflow: auto; /* Enable scrolling if content overflows */
+    flex: 1;
+    padding: 20px; 
+    overflow: auto;
 }
 

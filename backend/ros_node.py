@@ -1,5 +1,3 @@
-# backend/ros_node.py
-
 import threading
 import time
 import json
@@ -10,93 +8,85 @@ from interfaces.srv import Chat
 from rclpy.executors import MultiThreadedExecutor
 
 class ROS2Node(Node):
+    """
+    ROS2 Node to interact with Flask backend and handle ROS2 topics and services.
+    """
     def __init__(self, socketio):
         super().__init__('flask_ros2_node')
         self.socketio = socketio
 
-        # Publishers
+        # --- Publishers ---
         self.publisher = self.create_publisher(String, '/prompt_response', 10)
 
-        # Subscribers for ChatPanel
+        # --- Subscribers for ChatPanel ---
         self.prompt_request_subscription = self.create_subscription(
-            String,
-            '/prompt_request',
-            self.prompt_request_callback,
-            10)
+            String, '/prompt_request', self.prompt_request_callback, 10)
         self.prompt_alert_subscription = self.create_subscription(
-            String,
-            '/prompt_alert',
-            self.prompt_alert_callback,
-            10)
+            String, '/prompt_alert', self.prompt_alert_callback, 10)
         self.prompt_info_subscription = self.create_subscription(
-            String,
-            '/prompt_info',
-            self.prompt_info_callback,
-            10)
+            String, '/prompt_info', self.prompt_info_callback, 10)
 
-        # Subscribers for PlannedActionPanel
+        # --- Subscribers for PlannedActionPanel ---
         self.queue_subscription = self.create_subscription(
-            String,
-            '/json_queue',
-            self.queue_callback,
-            10)
+            String, '/json_queue', self.queue_callback, 10)
         self.action_status_subscription = self.create_subscription(
-            String,
-            '/action_status',
-            self.action_status_callback,
-            10)
+            String, '/action_status', self.action_status_callback, 10)
 
-        # Service client
+        # --- Service Client ---
         self.chat_request_client = self.create_client(Chat, 'chat_service')
 
         # Wait for the service to be available
-        while not self.chat_request_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Waiting for chat_service service...')
-            time.sleep(1)
+        self._wait_for_service()
 
-        self.get_logger().info('Connected to chat_service service.')
-
-        # Flag and lock for prompt responses
+        # --- Flags and Locks ---
         self.next_message_to_prompt_response = False
         self.flag_lock = threading.Lock()
 
-        # Store latest data
+        # --- Latest Data ---
         self.latest_queue = []
         self.latest_action_status = ''
+
+    def _wait_for_service(self):
+        """
+        Waits for the chat_service to be available.
+        """
+        while not self.chat_request_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waiting for chat_service service...')
+            time.sleep(1)
+        self.get_logger().info('Connected to chat_service service.')
 
     # --- ChatPanel Callbacks ---
 
     def prompt_request_callback(self, msg):
-        self.socketio.emit('ros_message', {
-            'user': 'ROS',
-            'message': msg.data,
-            'type': 'default'
-        })
+        """
+        Handles messages from the /prompt_request topic.
+        """
+        self.socketio.emit('ros_message', {'user': 'ROS', 'message': msg.data, 'type': 'default'})
         self.get_logger().info(f'Received prompt_request: {msg.data}')
-
         with self.flag_lock:
             self.next_message_to_prompt_response = True
         self.get_logger().info('Next user message will be sent to /prompt_response')
 
     def prompt_alert_callback(self, msg):
-        self.socketio.emit('ros_message', {
-            'user': 'ROS',
-            'message': msg.data,
-            'type': 'alert'
-        })
+        """
+        Handles messages from the /prompt_alert topic.
+        """
+        self.socketio.emit('ros_message', {'user': 'ROS', 'message': msg.data, 'type': 'alert'})
         self.get_logger().info(f'Received prompt_alert: {msg.data}')
 
     def prompt_info_callback(self, msg):
-        self.socketio.emit('ros_message', {
-            'user': 'ROS',
-            'message': msg.data,
-            'type': 'info'
-        })
+        """
+        Handles messages from the /prompt_info topic.
+        """
+        self.socketio.emit('ros_message', {'user': 'ROS', 'message': msg.data, 'type': 'info'})
         self.get_logger().info(f'Received prompt_info: {msg.data}')
 
     # --- PlannedActionPanel Callbacks ---
 
     def queue_callback(self, msg):
+        """
+        Handles messages from the /json_queue topic.
+        """
         self.get_logger().info(f'Received /queue message: {msg.data}')
         try:
             data = json.loads(msg.data)
@@ -108,6 +98,9 @@ class ROS2Node(Node):
             self.get_logger().error(f'Failed to parse /queue message: {e}')
 
     def action_status_callback(self, msg):
+        """
+        Handles messages from the /action_status topic.
+        """
         status = msg.data.strip().lower()
         self.latest_action_status = status
         self.get_logger().info(f'Received /action_status message: {status}')
@@ -117,6 +110,9 @@ class ROS2Node(Node):
     # --- Service Call ---
 
     def call_chat_service(self, message):
+        """
+        Calls the chat_service with the given message and returns the response.
+        """
         request = Chat.Request()
         request.message = message
         future = self.chat_request_client.call_async(request)
@@ -134,6 +130,9 @@ class ROS2Node(Node):
     # --- Publisher Method ---
 
     def publish_prompt_response(self, message):
+        """
+        Publishes a message to the /prompt_response topic.
+        """
         msg = String()
         msg.data = message
         self.publisher.publish(msg)

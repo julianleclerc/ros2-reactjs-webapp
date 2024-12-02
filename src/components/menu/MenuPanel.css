@@ -1,63 +1,62 @@
-/* Menu panel container */
+/* ------------------------- Menu Panel ------------------------- */
+
 .menu-panel {
-    background-color: #333; /* Dark gray background */
+    background-color: #333;
     color: white;
-    padding: 20px; /* Padding around the panel */
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center content horizontally */
-    box-sizing: border-box;
-    gap: 20px; /* Space between items */
-    height: 100%; /* Take full height of the parent container */
+    align-items: center;
+    gap: 20px;
+    height: 100%;
 }
 
-/* Menu button styling */
+/* ------------------------- Menu Buttons ------------------------- */
+
 .menu-panel button {
-    width: 100%; /* Make buttons fill the available width */
-    max-width: 200px; /* Limit button width */
-    padding: 10px 20px; /* Padding inside buttons */
+    width: 100%;
+    max-width: 200px;
+    padding: 10px 20px;
     border: none;
-    border-radius: 5px; /* Rounded corners for buttons */
-    background-color: #666; /* Default lighter gray background */
+    border-radius: 5px;
+    background-color: #666;
     color: white;
-    font-size: 1rem; /* Standard font size */
+    font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    position: relative; /* For tooltip positioning */
+    position: relative;
 }
 
-/* Active button stays darkened */
 .menu-panel button.active {
-    background-color: #444 !important; /* Darker gray for active button */
-    color: white; /* Ensure text remains visible */
+    background-color: #444 !important;
+    color: white;
 }
 
-/* Button hover effect */
 .menu-panel button:hover {
-    background-color: #555; /* Slightly darker gray on hover */
-    transform: scale(1.02); /* Slight scale effect on hover */
+    background-color: #555;
+    transform: scale(1.02);
 }
 
-/* Tooltip styling */
+/* ------------------------- Tooltip ------------------------- */
+
 .menu-panel button::after {
-    content: attr(data-tooltip); /* Tooltip text from data attribute */
+    content: attr(data-tooltip);
     position: absolute;
-    top: 50%; /* Vertically align to the middle of the button */
-    left: 105%; /* Position tooltip slightly to the right of the button */
-    transform: translateY(-50%); /* Adjust for vertical centering */
+    top: 50%;
+    left: 105%;
+    transform: translateY(-50%);
     background-color: black;
     color: white;
     font-size: 0.9rem;
     padding: 5px 10px;
     border-radius: 5px;
-    white-space: nowrap; /* Prevent text wrapping */
-    opacity: 0; /* Hidden by default */
-    pointer-events: none; /* Ignore pointer events for tooltips */
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
     transition: opacity 0.3s ease;
-    z-index: 100; /* Ensure tooltip appears on top */
+    z-index: 100;
 }
 
-/* Show tooltip on hover */
 .menu-panel button:hover::after {
-    opacity: 1; /* Make tooltip visible */
+    opacity: 1;
 }

@@ -1,87 +1,88 @@
-/* src/components/plannedActions/PlannedActionPanel.css */
+/* ------------------------- Main Container ------------------------- */
 
-/* Main planned actions container */
 .planned-action-panel {
-    background-color: #404040; /* Light gray background */
-    color: black;
-    padding: 20px; /* Increased padding for the entire panel */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  /* Header styling */
-  .planned-action-panel h2 {
-    margin: 0 0 20px 0;
-    color: black;
-    font-size: 1.5rem;
-    padding: 10px;
-    background-color: #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    text-align: center;
-  }
-  
-  /* Sub-container for queue elements */
-  .sub-container {
-    background-color: #ddd;
-    border-radius: 10px;
-    padding: 20px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    overflow-y: auto;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  }
-  
-  /* Queue item styling */
-  .queue-item {
-    background-color: #eee;
-    border-radius: 5px;
-    padding: 15px;
-    color: black;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .queue-item h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.2rem;
-    color: #333;
-  }
-  
-  .queue-item ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .queue-item ul li {
-    margin: 5px 0;
-    color: #666;
-  }
-  
-  /* Placeholder text for empty queue */
-  .queue-item p {
-    color: #999;
-    font-style: italic;
-    margin: 0;
-    text-align: center;
-  }
-  
-  /* Status styles */
-  .status-completed {
-    background-color: rgb(125, 255, 125) !important;
-  }
-  
-  .status-running {
-    background-color: rgb(255, 255, 125) !important;
-  }
-  
-  .status-stopped {
-    background-color: rgb(255, 125, 125) !important;
-  }
-  
-  
+  background-color: #404040;
+  color: black;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ------------------------- Sub-Container ------------------------- */
+
+.sub-container {
+  background-color: #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* ------------------------- Queue Item ------------------------- */
+
+.queue-item {
+  background-color: #eee;
+  border-radius: 5px;
+  padding: 15px;
+  color: black;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.queue-item h3 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.queue-item ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.queue-item ul li {
+  margin: 5px 0;
+  color: #666;
+}
+
+/* Placeholder for empty queue */
+.queue-item p {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  margin: 0;
+}
+
+/* ------------------------- Status Styling ------------------------- */
+
+.status-completed {
+  background-color: rgb(125, 255, 125) !important;
+}
+
+.status-running {
+  background-color: rgb(255, 255, 125) !important;
+}
+
+.status-stopped {
+  background-color: rgb(255, 125, 125) !important;
+}
+
+/* ------------------------- Header Styling ------------------------- */
+
+.planned-action-panel h2 {
+  margin: 0 0 20px;
+  color: black;
+  font-size: 1.5rem;
+  padding: 10px;
+  background-color: #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}

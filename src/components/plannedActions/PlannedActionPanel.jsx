@@ -1,20 +1,20 @@
-// src/components/planned_actions/PlannedActionPanel.jsx
-
 import React, { useEffect, useState } from "react";
 import "./PlannedActionPanel.css";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000"); // Adjust the URL if necessary
+// Initialize Socket.IO connection
+const socket = io("http://localhost:5000");
 
 const PlannedActionPanel = () => {
-  const resetSessionOnStart = false; // Set to true to wipe previous session memory
+  const resetSessionOnStart = false;
 
-  // Clear sessionStorage if resetSessionOnStart is true
+  // Clear session storage if resetSessionOnStart is enabled
   if (resetSessionOnStart) {
     sessionStorage.removeItem("plannedActionQueue");
     sessionStorage.removeItem("actionStatus");
   }
 
+  // State management for action queue and status
   const [queue, setQueue] = useState(() => {
     const savedQueue = sessionStorage.getItem("plannedActionQueue");
     try {
@@ -25,38 +25,30 @@ const PlannedActionPanel = () => {
     }
   });
 
-  const [actionStatus, setActionStatus] = useState(() => {
-    return sessionStorage.getItem("actionStatus") || "";
-  });
+  const [actionStatus, setActionStatus] = useState(() => sessionStorage.getItem("actionStatus") || "");
 
+  // Listen to updates from the backend
   useEffect(() => {
-    // Listen for queue updates from the backend
     socket.on("queue_update", (data) => {
-      console.log("Received queue_update:", data);
-      const newQueue = data.queue || [];
-      setQueue(newQueue);
+      setQueue(data.queue || []);
     });
 
-    // Listen for action status updates from the backend
     socket.on("action_status", (data) => {
-      console.log("Received action_status:", data);
-      const newStatus = data.status || "";
-      setActionStatus(newStatus);
+      setActionStatus(data.status || "");
     });
 
-    // Clean up the event listeners on component unmount
+    // Cleanup listeners on unmount
     return () => {
       socket.off("queue_update");
       socket.off("action_status");
     };
   }, []);
 
-  // Save queue to sessionStorage whenever it changes
+  // Save queue and action status to session storage
   useEffect(() => {
     sessionStorage.setItem("plannedActionQueue", JSON.stringify(queue));
   }, [queue]);
 
-  // Save actionStatus to sessionStorage whenever it changes
   useEffect(() => {
     sessionStorage.setItem("actionStatus", actionStatus);
   }, [actionStatus]);
@@ -72,9 +64,7 @@ const PlannedActionPanel = () => {
           queue.map((action, index) => (
             <div
               key={index}
-              className={`queue-item ${
-                index === 0 && actionStatus ? `status-${actionStatus}` : ""
-              }`}
+              className={`queue-item ${index === 0 && actionStatus ? `status-${actionStatus}` : ""}`}
             >
               <h3>Action {index + 1}</h3>
               <ul>

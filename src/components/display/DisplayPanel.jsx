@@ -1,34 +1,41 @@
 import React, { useState } from "react";
 import "./DisplayPanel.css";
 import ROSLIB from "roslib";
-import ros from "../../ros/rosService";
 
-const rvizDisplayTopic = new ROSLIB.Topic({
-    ros: ros,
-    name: "/rviz_display_base64",
-    messageType: "std_msgs/String",
-});
 
 const DisplayPanel = () => {
+    // ------------------------- State Management -------------------------
+    
+    // State to hold the current image source
     const [image, setImage] = useState("../static/images/image1.png");
 
+    // ------------------------- Helper Functions -------------------------
+
+    // Handle manual image change and unsubscribe from the ROS topic
     const handleImageChange = (src) => {
         setImage(src);
-        rvizDisplayTopic.unsubscribe();
     };
 
-    const subscribeToRviz = () => {
-        rvizDisplayTopic.subscribe((message) => {
-            setImage(`data:image/jpeg;base64,${message.data}`);
-        });
+    // Subscribe to the RViz ROS topic to receive image updates
+    const subscribeToRviz = (src) => {
+        setImage(src);
     };
+
+    // ------------------------- Render UI -------------------------
 
     return (
         <div className="display-panel">
+            {/* Button container for switching views */}
             <div className="button-container">
-                <button onClick={() => handleImageChange("../static/images/image1.png")}>Camera</button>
-                <button onClick={subscribeToRviz}>Nav2</button>
+                <button onClick={() => handleImageChange("../static/images/image1.png")}>
+                    Camera
+                </button>
+                <button onClick={subscribeToRviz}>
+                    Nav2
+                </button>
             </div>
+
+            {/* Display the image */}
             <img id="robot-image" src={image} alt="Robot Display" />
         </div>
     );

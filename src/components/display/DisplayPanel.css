@@ -1,24 +1,29 @@
+/* ------------------------- Display Panel ------------------------- */
+
 .display-panel {
-    background-color: #000000;
+    background-color: #000000; 
     padding: 10px;
-    position: relative; /* For positioning the button container */
+    position: relative;
 }
+
+/* ------------------------- Button Container ------------------------- */
 
 .button-container {
     position: absolute;
-    top: 10px;
-    right: 10px; /* Align buttons horizontally to the top-right corner */
+    top: 10px; 
+    right: 10px;
     display: flex;
-    gap: 10px; /* Space between buttons */
+    gap: 10px;
 }
 
+/* Buttons for controlling the display */
 .button-container button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    background-color: #666;
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 5px; 
+    background-color: #666; 
     color: white;
-    cursor: pointer;
+    cursor: pointer; 
     transition: background-color 0.3s ease;
 }
 
@@ -26,9 +31,11 @@
     background-color: #444;
 }
 
+/* ------------------------- Robot Image ------------------------- */
+
 #robot-image {
-    width: 100%;
-    height: auto;
-    border-radius: 5px;
-    margin-top: 60px; /* Space between buttons and image */
+    width: 100%; 
+    height: auto; 
+    border-radius: 5px; 
+    margin-top: 60px;
 }

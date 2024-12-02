@@ -1,42 +1,47 @@
+/* ------------------------- General Layout ------------------------- */
+
 .chat-panel {
     display: flex;
-    justify-content: center; /* Center the inner container horizontally */
-    align-items: center; /* Center vertically */
-    background-color: #303030; /* Background color for the main container */
+    justify-content: center;
+    align-items: center; 
+    background-color: #303030; 
     height: 100%;
     width: 100%;
     box-sizing: border-box;
-    overflow: hidden; /* Prevent overflow from internal components */
+    overflow: hidden;
 }
 
-/* Chat container (fixed size) */
+/* Chat container styling */
 .chat-container {
     display: flex;
     flex-direction: column;
-    background-color: #fff; /* Contrast background for inner container */
+    background-color: #fff; 
     padding: 20px;
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    width: 95%; /* Occupy 95% of the main container's width */
-    max-width: 1400px; /* Limit the width for very large screens */
-    height: 90%; /* Occupy 90% of the main container's height */
-    max-height: 800px; /* Limit the height */
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 95%;
+    max-width: 1400px;
+    height: 90%;
+    max-height: 800px;
     box-sizing: border-box;
-    overflow: hidden; /* Prevent internal overflow */
-    flex-shrink: 0; /* Prevent the container from shrinking */
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
-/* Tab container */
+/* ------------------------- Tab Navigation ------------------------- */
+
+/* Tab container for managing chat tabs */
 .tab-container {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
-    gap: 10px; /* Add spacing between tabs */
-    height: 50px; /* Fixed height for tabs */
-    overflow-x: auto; /* Allow horizontal scrolling if needed */
-    flex-shrink: 0; /* Prevent tabs from affecting container size */
+    gap: 5px;
+    height: 50px;
+    overflow-x: auto;
+    flex-shrink: 0;
 }
 
+/* Add tab button styling */
 .add-tab-button {
     padding: 10px 15px;
     border: none;
@@ -48,17 +53,18 @@
 }
 
 .add-tab-button:hover {
-    background-color: #555;
+    background-color: #555; 
 }
 
+/* Scrollable tabs container */
 .tabs-scrollable {
     display: flex;
-    overflow-x: auto; /* Horizontal scrolling for tabs */
-    flex: 1; /* Take remaining space in the tab container */
-    gap: 15px; /* Add spacing between tabs */
+    overflow-x: auto; 
+    flex: 1;
+    gap: 15px;
 }
 
-/* Tab buttons */
+/* Individual tab button styling */
 .tab-button {
     padding: 10px 15px;
     border: none;
@@ -68,21 +74,24 @@
     cursor: pointer;
     flex-shrink: 0;
     transition: background-color 0.3s ease;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
 }
 
 .tab-button:hover {
     background-color: #555;
 }
 
+/* Active tab styling */
 .active-tab {
-    background-color: #333; /* Highlight active tab */
+    background-color: #333;
 }
 
-/* Chat log */
+/* ------------------------- Chat Log ------------------------- */
+
+/* Chat log container */
 .chat-log {
-    flex: 1; /* Take up all available space below tabs */
-    overflow-y: auto; /* Scroll vertically if content exceeds height */
+    flex: 1;
+    overflow-y: auto;
     background-color: #eee;
     padding: 15px;
     border-radius: 5px;
@@ -90,40 +99,46 @@
     box-sizing: border-box;
 }
 
+/* Scrollbar styling */
 .chat-log::-webkit-scrollbar {
     width: 8px;
 }
 
 .chat-log::-webkit-scrollbar-thumb {
-    background-color: #ccc;
+    background-color: #ccc; 
     border-radius: 4px;
 }
 
 .chat-log::-webkit-scrollbar-thumb:hover {
-    background-color: #aaa;
+    background-color: #aaa; 
 }
 
+/* Chat message spacing */
 .chat-log p {
     margin: 5px 0;
 }
 
-/* Chat input container */
+/* ------------------------- Chat Input ------------------------- */
+
+/* Input container for sending messages */
 .chat-input-container {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-shrink: 0; /* Prevent shrinking */
-    height: 60px; /* Fixed height for input */
+    gap: 10px; 
+    flex-shrink: 0;
+    height: 60px;
 }
 
+/* Input field styling */
 .chat-input-container input {
-    flex: 1;
+    flex: 1; 
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 16px;
 }
 
+/* Button styling within input container */
 .chat-input-container button {
     padding: 10px 20px;
     border: none;
@@ -139,37 +154,39 @@
     background-color: #444;
 }
 
-/* When ROS2 connection is disconnected */
+/* Disconnected state styling */
 .chat-input-container.disconnected input,
 .chat-input-container.disconnected button {
-    background-color: #ffcccc; /* Red background */
-    border: 1px solid #ff0000; /* Red border */
-    color: #ff0000; /* Red text */
-    cursor: not-allowed; /* Disable interaction */
-}
-
-/* Warning message when rosbridge is disconnected */
-.rosbridge-status-warning {
+    background-color: #ffcccc;
+    border: 1px solid #ff0000; 
     color: #ff0000;
-    font-weight: bold;
-    margin-top: 10px;
+    cursor: not-allowed;
 }
 
-/* Add this to your ChatPanel.css */
+/* ------------------------- Messages ------------------------- */
 
-/* Default message style */
+/* Default chat message styling */
 .chat-message {
     margin: 5px 0;
 }
 
-/* Alert message style */
+/* Alert message styling */
 .chat-message.alert {
     color: red;
     font-weight: bold;
 }
 
-/* Info message style */
+/* Info message styling */
 .chat-message.info {
     color: blue;
     font-style: italic;
+}
+
+/* ------------------------- Status Messages ------------------------- */
+
+/* Warning message styling */
+.rosbridge-status-warning {
+    color: #ff0000;
+    font-weight: bold;
+    margin-top: 10px;
 }

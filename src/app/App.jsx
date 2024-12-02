@@ -1,5 +1,3 @@
-// src/app/App.jsx
-
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import MenuPanel from "../components/menu/MenuPanel";
@@ -11,15 +9,17 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState("ChatInterfacePage");
   const { aspectRatio } = useWindowDimensions();
 
+  /* adjust ratio threshold to hide navigation bar and switch to chat interface */
   const aspectRatioThreshold = 0.5;
 
-  // Effect to switch to ChatInterfacePage if in mobile layout
+  /* if mobile mode: switch to chat interface */
   useEffect(() => {
     if (aspectRatio > aspectRatioThreshold && currentPage !== "ChatInterfacePage") {
       setCurrentPage("ChatInterfacePage");
     }
   }, [aspectRatio, currentPage]);
 
+  /* setup pages */
   const renderPage = () => {
     switch (currentPage) {
       case "ChatInterfacePage":
@@ -31,6 +31,8 @@ const App = () => {
     }
   };
 
+
+  /* render toolbar + page */
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {aspectRatio <= aspectRatioThreshold && (

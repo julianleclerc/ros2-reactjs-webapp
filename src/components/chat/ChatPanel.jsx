@@ -1,185 +1,108 @@
-// src/components/chat/ChatPanel.jsx
-
 import React, { useState, useEffect, useRef } from "react";
 import "./ChatPanel.css";
 import io from "socket.io-client";
 
+// Socket.IO configuration
 const socket = io("http://localhost:5000");
 
 const ChatPanel = () => {
-  
-  // ------------------- Session reset -------------------
-  const resetSessionOnStart = false; 
-  // -----------------------------------------------------
-
-  // clears storage if reset true
-  if (resetSessionOnStart) {
-    sessionStorage.clear();
-  }
-
-  const [tabs, setTabs] = useState(() => {
-    const savedTabs = sessionStorage.getItem("chatTabs");
-    return savedTabs ? JSON.parse(savedTabs) : [{ name: "Global", namespace: null }];
-  });
-
+  // ---------------------- States -----------------------
+  const [tabs, setTabs] = useState(() => loadFromSession("chatTabs", [{ name: "Global", namespace: null }]));
   const [activeTab, setActiveTab] = useState("Global");
-
-  const [messages, setMessages] = useState(() => {
-    const savedMessages = sessionStorage.getItem("chatMessages");
-    return savedMessages ? JSON.parse(savedMessages) : { Global: [] };
-  });
-
+  const [messages, setMessages] = useState(() => loadFromSession("chatMessages", { Global: [] }));
   const [input, setInput] = useState("");
-
   const chatLogRef = useRef(null);
 
-  // Save tabs to sessionStorage whenever they change
-  useEffect(() => {
-    sessionStorage.setItem("chatTabs", JSON.stringify(tabs));
-  }, [tabs]);
+  // ------------------ Configuration -------------------
+  const resetSessionOnStart = false; // Clears session storage if true
+  if (resetSessionOnStart) sessionStorage.clear();
 
-  // Save messages to sessionStorage whenever they change
-  useEffect(() => {
-    sessionStorage.setItem("chatMessages", JSON.stringify(messages));
-  }, [messages]);
+  // ------------------- Effects ------------------------
+  useEffect(() => saveToSession("chatTabs", tabs), [tabs]);
+  useEffect(() => saveToSession("chatMessages", messages), [messages]);
+  useEffect(() => setupSocketListener(), []);
+  useEffect(() => autoScrollToBottom(), [messages, activeTab]);
 
-  // Set up Socket.IO listener once when the component mounts
-  useEffect(() => {
-    // When a 'ros_message' event is received, update the chat log
+  // ----------------- Helper Functions -----------------
+
+  // Load data from session storage or return default value
+  function loadFromSession(key, defaultValue) {
+    const savedData = sessionStorage.getItem(key);
+    return savedData ? JSON.parse(savedData) : defaultValue;
+  }
+
+  // Save data to session storage
+  function saveToSession(key, value) {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  }
+
+  // Set up Socket.IO listener for incoming messages
+  function setupSocketListener() {
     socket.on("ros_message", (data) => {
-      setMessages((prevMessages) => {
-        const targetTab = "Global"; // Always append ROS messages to 'Global' tab
-
-        const updatedMessages = {
-          ...prevMessages,
-          [targetTab]: [
-            ...(prevMessages[targetTab] || []),
-            {
-              user: data.user,
-              message: data.message,
-              type: data.type || "default",
-            },
-          ],
-        };
-
-        return updatedMessages;
+      updateMessages("Global", {
+        user: data.user,
+        message: data.message,
+        type: data.type || "default",
       });
     });
 
-    // Clean up the event listener when the component unmounts
-    return () => {
-      socket.off("ros_message");
-    };
-  }, []);
+    return () => socket.off("ros_message");
+  }
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
+  // Auto-scroll the chat log to the bottom
+  function autoScrollToBottom() {
     if (chatLogRef.current) {
       chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
     }
-  }, [messages, activeTab]);
+  }
 
-  // Function to handle sending messages
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  // Update the messages for a specific tab
+  function updateMessages(tabName, newMessage) {
+    setMessages((prevMessages) => ({
+      ...prevMessages,
+      [tabName]: [...(prevMessages[tabName] || []), newMessage],
+    }));
+  }
 
-    // Add the user's message to the chat log
-    setMessages((prevMessages) => {
-      const updatedMessages = {
-        ...prevMessages,
-        [activeTab]: [
-          ...(prevMessages[activeTab] || []),
-          { user: "You", message: input.trim(), type: "default" },
-        ],
-      };
-
-      return updatedMessages;
-    });
-
-    const request = {
-      message: input.trim(),
-      namespace: tabs.find((tab) => tab.name === activeTab)?.namespace || null,
-    };
-    setInput(""); // Clear the input field
-
+  // Handle sending messages to the backend
+  async function sendMessageToBackend(request) {
     try {
-      // Send the message to the backend
       const response = await fetch("http://localhost:5000/send_message", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        // Add the backend response to the chat log
-        setMessages((prevMessages) => {
-          const updatedMessages = {
-            ...prevMessages,
-            [activeTab]: [
-              ...(prevMessages[activeTab] || []),
-              { user: "ROS", message: data.response, type: "default" },
-            ],
-          };
-
-          return updatedMessages;
-        });
-      } else {
-        console.error("Failed to send message to backend");
-        // Optionally display an error message in the chat
-        setMessages((prevMessages) => {
-          const updatedMessages = {
-            ...prevMessages,
-            [activeTab]: [
-              ...(prevMessages[activeTab] || []),
-              {
-                user: "System",
-                message: "Error: Failed to communicate with the backend.",
-                type: "alert",
-              },
-            ],
-          };
-
-          return updatedMessages;
-        });
-      }
+      if (!response.ok) throw new Error("Failed to send message");
+      const data = await response.json();
+      updateMessages(activeTab, { user: "ROS", message: data.response, type: "default" });
     } catch (error) {
-      console.error("Error communicating with backend:", error);
-      // Optionally display an error message in the chat
-      setMessages((prevMessages) => {
-        const updatedMessages = {
-          ...prevMessages,
-          [activeTab]: [
-            ...(prevMessages[activeTab] || []),
-            {
-              user: "System",
-              message: "Error: Unable to reach the backend server.",
-              type: "alert",
-            },
-          ],
-        };
-
-        return updatedMessages;
+      console.error("Error:", error.message);
+      updateMessages(activeTab, {
+        user: "System",
+        message: "Error: Unable to reach the backend server.",
+        type: "alert",
       });
     }
+  }
+
+  // ---------------- Event Handlers --------------------
+
+  // Handle sending a message
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    // Add the user's message to the current tab
+    updateMessages(activeTab, { user: "You", message: input.trim(), type: "default" });
+
+    // Prepare and send the request to the backend
+    const namespace = tabs.find((tab) => tab.name === activeTab)?.namespace || null;
+    const request = { message: input.trim(), namespace };
+    setInput("");
+    await sendMessageToBackend(request);
   };
 
-  // Function to handle voice prompt activation (placeholder)
-  const handleVoicePrompt = () => {
-    alert("Voice Prompt Activated! (🎙️)"); // Implement voice input logic here
-  };
-
-  // Handle 'Enter' key press in the input field
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  // Function to add a new tab with a namespace
+  // Handle adding a new tab
   const handleAddTab = () => {
     const namespace = prompt("Enter the robot namespace:");
     if (!namespace) return;
@@ -189,29 +112,34 @@ const ChatPanel = () => {
       return;
     }
 
-    // Add the new tab and initialize its message log
     setTabs((prevTabs) => [...prevTabs, { name: namespace, namespace }]);
-    setMessages((prevMessages) => ({
-      ...prevMessages,
-      [namespace]: [],
-    }));
+    setMessages((prevMessages) => ({ ...prevMessages, [namespace]: [] }));
   };
 
+  // Handle sending a message when 'Enter' key is pressed
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // Placeholder for voice prompt activation
+  const handleVoicePrompt = () => alert("Voice Prompt Activated! (🎙️)");
+
+  // -------------------- Render ------------------------
   return (
     <div className="chat-panel">
       <div className="chat-container">
-        {/* Tabs */}
+
+        {/* Tabs for different namespaces */}
         <div className="tab-container">
-          <button className="add-tab-button" onClick={handleAddTab}>
-            +
-          </button>
+          <button className="add-tab-button" onClick={handleAddTab}>+</button>
           <div className="tabs-scrollable">
             {tabs.map((tab) => (
               <button
                 key={tab.name}
-                className={`tab-button ${
-                  activeTab === tab.name ? "active-tab" : ""
-                }`}
+                className={`tab-button ${activeTab === tab.name ? "active-tab" : ""}`}
                 onClick={() => setActiveTab(tab.name)}
               >
                 {tab.name}
@@ -220,7 +148,7 @@ const ChatPanel = () => {
           </div>
         </div>
 
-        {/* Chat Log */}
+        {/* Chat messages display */}
         <div className="chat-log" ref={chatLogRef}>
           {(messages[activeTab] || []).map((chat, idx) => (
             <p key={idx} className={`chat-message ${chat.type || ""}`}>
@@ -229,7 +157,7 @@ const ChatPanel = () => {
           ))}
         </div>
 
-        {/* Chat Input */}
+        {/* Input field and controls */}
         <div className="chat-input-container">
           <input
             type="text"
@@ -238,9 +166,7 @@ const ChatPanel = () => {
             onKeyDown={handleKeyDown}
             placeholder="Type your message here..."
           />
-          <button onClick={handleVoicePrompt} className="voice-prompt-button">
-            🎙️
-          </button>
+          <button onClick={handleVoicePrompt} className="voice-prompt-button">🎙️</button>
           <button onClick={handleSend}>Send</button>
         </div>
       </div>
