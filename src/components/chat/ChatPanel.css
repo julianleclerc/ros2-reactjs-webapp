@@ -139,3 +139,37 @@
     background-color: #444;
 }
 
+/* When ROS2 connection is disconnected */
+.chat-input-container.disconnected input,
+.chat-input-container.disconnected button {
+    background-color: #ffcccc; /* Red background */
+    border: 1px solid #ff0000; /* Red border */
+    color: #ff0000; /* Red text */
+    cursor: not-allowed; /* Disable interaction */
+}
+
+/* Warning message when rosbridge is disconnected */
+.rosbridge-status-warning {
+    color: #ff0000;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Add this to your ChatPanel.css */
+
+/* Default message style */
+.chat-message {
+    margin: 5px 0;
+}
+
+/* Alert message style */
+.chat-message.alert {
+    color: red;
+    font-weight: bold;
+}
+
+/* Info message style */
+.chat-message.info {
+    color: blue;
+    font-style: italic;
+}

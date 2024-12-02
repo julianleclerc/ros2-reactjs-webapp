@@ -12,6 +12,7 @@
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "roslib": "^1.4.1",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^4.2.4"
   },
   "overrides": {

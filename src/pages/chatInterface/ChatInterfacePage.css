@@ -1,23 +1,115 @@
-.chat-interface-page {
+/* src/pages/chatInterface/ChatInterfacePage.css */
+
+/* --- Global Reset (Optional) --- */
+
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* --- Desktop Layout Styles --- */
+  
+  .chat-interface-page:not(.mobile) {
     display: grid;
-    grid-template-columns: 30% auto; /* Adjust width propotion */
-    grid-template-rows: 50% auto; /* Adjust height propotion */
+    grid-template-columns: 500px auto;
+    grid-template-rows: 50% 50%;
     width: 100%;
     background-color: #000000;
-    height: 100vh; 
-}
-
-.planned-action-panel {
+    height: 100vh;
+  }
+  
+  .chat-interface-page:not(.mobile) .planned-action-panel {
     grid-column: 1 / 2;
-    grid-row: 1 / 3; 
+    grid-row: 1 / 3;
+  }
+  
+  .chat-interface-page:not(.mobile) .display-panel {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+  
+  .chat-interface-page:not(.mobile) .chat-panel {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+  }
+  
+  /* --- Mobile Layout Styles --- */
+  
+  .chat-interface-page.mobile {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+  }
+  
+  .chat-interface-page.mobile .display-panel {
+    flex: 0 0 35%;
+    width: 100%;
+  }
+  
+  .chat-interface-page.mobile .chat-panel {
+    flex: 1 1 80%;
+    width: 100%;
+    overflow: auto;
+  }
+  
+  .chat-interface-page.mobile .planned-action-panel-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .chat-interface-page.mobile .planned-action-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+    
+.toggle-planned-action-panel-button {
+  position: fixed; 
+  top: 20px;
+  left: 10px;
+  z-index: 1000;
+  padding: 10px 20px; 
+  border: none;
+  border-radius: 5px;
+  background-color: #666; 
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}  
+.toggle-planned-action-panel-button:hover {
+  background-color: #444; 
+}
+  
+  /* --- General Styles to Ensure Flexibility --- */
+  
+  .chat-interface-page,
+  .chat-interface-page.mobile,
+  .planned-action-panel-container,
+  .planned-action-panel {
+    min-height: 0;
+    min-width: 0;
+  }
+  
+.button-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+}
+  
+.chat-container {
+  overflow-y: auto;
 }
 
-.display-panel {
-    grid-column: 2 / 3; /* Second column */
-    grid-row: 1 / 2; /* First row (60% height) */
+.planned-action-panel-container {
+  overflow-y: auto;
 }
-
-.chat-panel {
-    grid-column: 2 / 3; /* Second column */
-    grid-row: 2 / 3; /* Second row (40% height) */
-}
+  
