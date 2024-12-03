@@ -1,3 +1,5 @@
+# app.py
+
 from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -15,7 +17,7 @@ def create_app():
     """
     # Initialize Flask app with CORS and SocketIO
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "*"}})
     socketio = SocketIO(app, cors_allowed_origins="*")
 
     # Initialize ROS2
@@ -42,7 +44,7 @@ def create_app():
     ros2_thread.start()
 
     # Initialize application routes
-    init_routes(app, ros2_node)
+    init_routes(app, ros2_node, socketio)
 
     return app, socketio
 

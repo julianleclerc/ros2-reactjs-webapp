@@ -1,44 +1,118 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./DisplayPanel.css";
-import ROSLIB from "roslib";
-
+import { io } from "socket.io-client";
 
 const DisplayPanel = () => {
-    // ------------------------- State Management -------------------------
-    
-    // State to hold the current image source
-    const [image, setImage] = useState("../static/images/image1.png");
+  const [activeFeeds, setActiveFeeds] = useState(() => {
+    const savedFeeds = localStorage.getItem("activeFeeds");
+    return savedFeeds ? JSON.parse(savedFeeds) : { camera: false, rviz: false };
+  });
+  const [cameraImage, setCameraImage] = useState("");
+  const [rvizImage, setRvizImage] = useState("");
+  const socketRef = useRef(null);
+  const cameraThrottleRef = useRef(false);
+  const rvizThrottleRef = useRef(false);
 
-    // ------------------------- Helper Functions -------------------------
+  useEffect(() => {
+    localStorage.setItem("activeFeeds", JSON.stringify(activeFeeds));
+  }, [activeFeeds]);
 
-    // Handle manual image change and unsubscribe from the ROS topic
-    const handleImageChange = (src) => {
-        setImage(src);
+  useEffect(() => {
+    if (!socketRef.current) {
+      socketRef.current = io("http://localhost:5000");
+
+      socketRef.current.on("camera_image", (data) => {
+        if (activeFeeds.camera && !cameraThrottleRef.current) {
+          cameraThrottleRef.current = true;
+          setCameraImage(`data:image/jpeg;base64,${data}`);
+          setTimeout(() => {
+            cameraThrottleRef.current = false;
+          }, 200);
+        }
+      });
+
+      socketRef.current.on("rviz_image", (data) => {
+        if (activeFeeds.rviz && !rvizThrottleRef.current) {
+          rvizThrottleRef.current = true;
+          setRvizImage(`data:image/jpeg;base64,${data}`);
+          setTimeout(() => {
+            rvizThrottleRef.current = false;
+          }, 200);
+        }
+      });
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
+  }, [activeFeeds]);
 
-    // Subscribe to the RViz ROS topic to receive image updates
-    const subscribeToRviz = (src) => {
-        setImage(src);
-    };
+  useEffect(() => {
+    if (socketRef.current) {
+      if (activeFeeds.camera) {
+        socketRef.current.emit("subscribe_to_camera");
+      } else {
+        socketRef.current.emit("unsubscribe_from_camera");
+        setCameraImage("");
+      }
 
-    // ------------------------- Render UI -------------------------
+      if (activeFeeds.rviz) {
+        socketRef.current.emit("subscribe_to_rviz");
+      } else {
+        socketRef.current.emit("unsubscribe_from_rviz");
+        setRvizImage("");
+      }
+    }
+  }, [activeFeeds]);
 
-    return (
-        <div className="display-panel">
-            {/* Button container for switching views */}
-            <div className="button-container">
-                <button onClick={() => handleImageChange("../static/images/image1.png")}>
-                    Camera
-                </button>
-                <button onClick={subscribeToRviz}>
-                    Nav2
-                </button>
-            </div>
+  const handleFeedToggle = (feed) => {
+    setActiveFeeds((prevFeeds) => ({
+      ...prevFeeds,
+      [feed]: !prevFeeds[feed],
+    }));
+  };
 
-            {/* Display the image */}
-            <img id="robot-image" src={image} alt="Robot Display" />
-        </div>
-    );
+  const multipleFeedsActive = activeFeeds.camera && activeFeeds.rviz;
+
+  return (
+    <div className="display-sub-panel">
+      {/* Button container */}
+      <div className="button-display-container">
+        <button
+          onClick={() => handleFeedToggle("camera")}
+          className={activeFeeds.camera ? "active" : ""}
+        >
+          Camera
+        </button>
+        <button
+          onClick={() => handleFeedToggle("rviz")}
+          className={activeFeeds.rviz ? "active" : ""}
+        >
+          Navigation
+        </button>
+      </div>
+
+      {/* Image container */}
+      <div
+        className={`image-container ${
+          multipleFeedsActive ? "multiple-feeds" : ""
+        }`}
+      >
+        {activeFeeds.camera && cameraImage && (
+          <img className="feed-image" src={cameraImage} alt="Camera Feed" />
+        )}
+        {activeFeeds.rviz && rvizImage && (
+          <img className="feed-image" src={rvizImage} alt="Nav2 Feed" />
+        )}
+        {!activeFeeds.camera && !activeFeeds.rviz && (
+          <div className="no-display-message">No display selected</div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default DisplayPanel;

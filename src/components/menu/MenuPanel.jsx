@@ -2,10 +2,10 @@ import React from "react";
 import "./MenuPanel.css";
 
 const MenuPanel = ({ setPage }) => {
-    // Define button configurations for the menu
+    // Define button configurations
     const buttons = [
-        { id: 1, text: "1", tooltip: "Chat interface", page: "ChatInterfacePage" },
-        { id: 2, text: "2", tooltip: "Action edit interface", page: "ActionInterfacePage" },
+        { id: 1, text: "Chat", page: "ChatInterfacePage" },
+        { id: 2, text: "Action", page: "ActionInterfacePage" },
     ];
 
     // Render the menu panel with buttons
@@ -13,12 +13,11 @@ const MenuPanel = ({ setPage }) => {
         <div className="menu-panel">
             {buttons.map((button) => (
                 <button
-                    key={button.id} // Unique key for each button
-                    className="menu-button" // Shared button styling
-                    data-tooltip={button.tooltip} // Tooltip text
-                    onClick={() => setPage(button.page)} // Set the page on click
+                    key={button.id}
+                    className="menu-button"
+                    onClick={() => setPage(button.page)}
                 >
-                    {button.text} {/* Display button text */}
+                    {button.text} 
                 </button>
             ))}
         </div>

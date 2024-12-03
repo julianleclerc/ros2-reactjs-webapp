@@ -10,24 +10,19 @@ function getWindowDimensions() {
   };
 }
 
-// Custom hook to track and update window dimensions
+
 export default function useWindowDimensions() {
-  // State to hold the current window dimensions
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
-  // Effect to update dimensions on window resize
   useEffect(() => {
-    // Handler for window resize
     function handleResize() {
       setWindowDimensions(getWindowDimensions());
     }
 
-    // Add resize event listener
     window.addEventListener("resize", handleResize);
 
-    // Cleanup event listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return windowDimensions;
+  return windowDimensions; // Includes { width, height, aspectRatio }
 }

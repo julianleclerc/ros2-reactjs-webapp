@@ -1,9 +1,15 @@
-from flask import request, jsonify
+# routes.py
 
-def init_routes(app, ros2_node):
+from flask import request, jsonify
+from flask_socketio import emit, join_room, leave_room
+
+def init_routes(app, ros2_node, socketio):
     """
-    Initialize Flask routes with the given app and ROS2 node.
+    Initialize Flask routes and Socket.IO events with the given app, ROS2 node, and Socket.IO instance.
     """
+
+    # --- Flask Routes ---
+
     @app.route('/send_message', methods=['POST'])
     def send_message():
         """
@@ -37,3 +43,36 @@ def init_routes(app, ros2_node):
                 return jsonify({'response': response})
             else:
                 return jsonify({'error': 'Failed to get response from ROS2'}), 500
+
+    # --- Socket.IO Events ---
+
+    @socketio.on('connect')
+    def handle_connect():
+        ros2_node.get_logger().info(f'Client connected: {request.sid}')
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        ros2_node.get_logger().info(f'Client disconnected: {request.sid}')
+        # Leave all rooms
+        leave_room('camera', sid=request.sid, namespace='/')
+        leave_room('rviz', sid=request.sid, namespace='/')
+
+    @socketio.on('subscribe_to_camera')
+    def handle_subscribe_camera():
+        ros2_node.get_logger().info(f'Client {request.sid} subscribed to camera')
+        join_room('camera', sid=request.sid, namespace='/')
+
+    @socketio.on('unsubscribe_from_camera')
+    def handle_unsubscribe_camera():
+        ros2_node.get_logger().info(f'Client {request.sid} unsubscribed from camera')
+        leave_room('camera', sid=request.sid, namespace='/')
+
+    @socketio.on('subscribe_to_rviz')
+    def handle_subscribe_rviz():
+        ros2_node.get_logger().info(f'Client {request.sid} subscribed to rviz')
+        join_room('rviz', sid=request.sid, namespace='/')
+
+    @socketio.on('unsubscribe_from_rviz')
+    def handle_unsubscribe_rviz():
+        ros2_node.get_logger().info(f'Client {request.sid} unsubscribed from rviz')
+        leave_room('rviz', sid=request.sid, namespace='/')

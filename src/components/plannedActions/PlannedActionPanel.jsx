@@ -54,7 +54,7 @@ const PlannedActionPanel = () => {
   }, [actionStatus]);
 
   return (
-    <div className="planned-action-panel">
+    <div className="planned-action-sub-panel">
       <div className="sub-container">
         {queue.length === 0 ? (
           <div className="queue-item">

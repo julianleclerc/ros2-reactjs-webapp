@@ -6,12 +6,15 @@ import PlannedActionPanel from "../../components/plannedActions/PlannedActionPan
 import useWindowDimensions from "../../hooks/useWindowDimensions";
 
 const ChatInterfacePage = () => {
-  const { aspectRatio } = useWindowDimensions();
+  const { aspectRatio, width } = useWindowDimensions();
   const [showPlannedActionPanel, setShowPlannedActionPanel] = useState(false);
 
-  const aspectRatioThreshold = 0.7; // Threshold to switch between mobile and desktop layouts
+  const aspectRatioThreshold = 0.9; // Threshold to switch between mobile and desktop layouts
+  const mobileWidthThreshold = 800; // Switch to mobile mode when width < 800px
 
-  return aspectRatio > aspectRatioThreshold ? (
+  const isMobile = aspectRatio > aspectRatioThreshold || width < mobileWidthThreshold;
+
+  return isMobile ? (
     // Mobile Layout
     <div className="chat-interface-page mobile">
       <div className="button-container">
@@ -19,7 +22,7 @@ const ChatInterfacePage = () => {
           className="toggle-planned-action-panel-button"
           onClick={() => setShowPlannedActionPanel(!showPlannedActionPanel)}
         >
-          {showPlannedActionPanel ? "Hide Planned Actions" : "Show Planned Actions"}
+          {showPlannedActionPanel ? "<<<" : ">>>"}
         </button>
       </div>
       {showPlannedActionPanel ? (

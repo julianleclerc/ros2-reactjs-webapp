@@ -7,19 +7,22 @@ import useWindowDimensions from "../hooks/useWindowDimensions";
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState("ChatInterfacePage");
-  const { aspectRatio } = useWindowDimensions();
+  const { aspectRatio, height } = useWindowDimensions();
 
-  /* adjust ratio threshold to hide navigation bar and switch to chat interface */
-  const aspectRatioThreshold = 0.5;
+  /* Thresholds to hide navigation bar and switch to chat interface */
+  const aspectRatioThreshold = 0.6;
+  const heightThreshold = 500; // Switch to chat interface if height < 500px
 
-  /* if mobile mode: switch to chat interface */
+  const isMobile = aspectRatio > aspectRatioThreshold || height < heightThreshold;
+
+  /* Automatically switch to chat interface if in mobile mode */
   useEffect(() => {
-    if (aspectRatio > aspectRatioThreshold && currentPage !== "ChatInterfacePage") {
+    if (isMobile && currentPage !== "ChatInterfacePage") {
       setCurrentPage("ChatInterfacePage");
     }
-  }, [aspectRatio, currentPage]);
+  }, [isMobile, currentPage]);
 
-  /* setup pages */
+  /* Setup pages */
   const renderPage = () => {
     switch (currentPage) {
       case "ChatInterfacePage":
@@ -31,18 +34,15 @@ const App = () => {
     }
   };
 
-
-  /* render toolbar + page */
+  /* Render toolbar + page */
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
-      {aspectRatio <= aspectRatioThreshold && (
+      {!isMobile && (
         <div className="nav">
           <MenuPanel setPage={setCurrentPage} />
         </div>
       )}
-      <div className="app">
-        {renderPage()}
-      </div>
+      <div className="app">{renderPage()}</div>
     </div>
   );
 };

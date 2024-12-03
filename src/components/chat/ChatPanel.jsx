@@ -14,7 +14,7 @@ const ChatPanel = () => {
   const chatLogRef = useRef(null);
 
   // ------------------ Configuration -------------------
-  const resetSessionOnStart = false; // Clears session storage if true
+  const resetSessionOnStart = true; // Clears session storage on boot if true
   if (resetSessionOnStart) sessionStorage.clear();
 
   // ------------------- Effects ------------------------
@@ -129,7 +129,7 @@ const ChatPanel = () => {
 
   // -------------------- Render ------------------------
   return (
-    <div className="chat-panel">
+    <div className="chat-sub-panel">
       <div className="chat-container">
 
         {/* Tabs for different namespaces */}
