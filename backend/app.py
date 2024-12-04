@@ -1,37 +1,33 @@
 # app.py
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from threading import Thread
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from datetime import datetime
 
 from ros_node import ROS2Node
 from routes import init_routes
 import config
 
 def create_app():
-    """
-    Create and configure the Flask app, initialize ROS2, and set up routes and SocketIO.
-    """
-    # Initialize Flask app with CORS and SocketIO
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}})
     socketio = SocketIO(app, cors_allowed_origins="*")
 
+    # Generate server start time
+    app.server_start_time = datetime.utcnow().isoformat()
+    print("Server start time:", app.server_start_time)
+
     # Initialize ROS2
     rclpy.init()
     ros2_node = ROS2Node(socketio)
-
-    # Create and configure the ROS2 executor
     executor = MultiThreadedExecutor()
     executor.add_node(ros2_node)
 
     def ros2_spin():
-        """
-        Spin the ROS2 executor in a separate thread.
-        """
         try:
             executor.spin()
         finally:
@@ -39,7 +35,6 @@ def create_app():
             ros2_node.destroy_node()
             rclpy.shutdown()
 
-    # Start ROS2 spinning in a separate thread
     ros2_thread = Thread(target=ros2_spin, daemon=True)
     ros2_thread.start()
 
@@ -48,9 +43,11 @@ def create_app():
 
     return app, socketio
 
-# Create Flask app and SocketIO instance
 app, socketio = create_app()
 
+@app.route('/server_start_time')
+def get_server_start_time():
+    return jsonify({'server_start_time': app.server_start_time})
+
 if __name__ == '__main__':
-    # Run the Flask app with SocketIO
     socketio.run(app, host=config.FLASK_HOST, port=config.FLASK_PORT)

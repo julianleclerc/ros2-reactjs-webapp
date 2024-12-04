@@ -5,18 +5,12 @@ import io from "socket.io-client";
 // Initialize Socket.IO connection
 const socket = io("http://localhost:5000");
 
+// Key to store server start time
+const SERVER_START_TIME_KEY = "serverStartTime";
+
 const PlannedActionPanel = () => {
-  const resetSessionOnStart = false;
-
-  // Clear session storage if resetSessionOnStart is enabled
-  if (resetSessionOnStart) {
-    sessionStorage.removeItem("plannedActionQueue");
-    sessionStorage.removeItem("actionStatus");
-  }
-
-  // State management for action queue and status
   const [queue, setQueue] = useState(() => {
-    const savedQueue = sessionStorage.getItem("plannedActionQueue");
+    const savedQueue = localStorage.getItem("plannedActionQueue");
     try {
       return savedQueue ? JSON.parse(savedQueue) : [];
     } catch (e) {
@@ -25,7 +19,34 @@ const PlannedActionPanel = () => {
     }
   });
 
-  const [actionStatus, setActionStatus] = useState(() => sessionStorage.getItem("actionStatus") || "");
+  const [actionStatus, setActionStatus] = useState(() => localStorage.getItem("actionStatus") || "");
+
+  // Check server start time on mount
+  useEffect(() => {
+    fetch("http://localhost:5000/server_start_time")
+      .then((response) => response.json())
+      .then((data) => {
+        const serverStartTime = data.server_start_time;
+        console.log("Received server start time:", serverStartTime);
+        const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
+        console.log("Stored server start time:", storedServerStartTime);
+
+        if (storedServerStartTime !== serverStartTime) {
+          console.log("Server start time mismatch. Clearing local storage.");
+          localStorage.clear();
+          localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
+
+          // Reset state
+          setQueue([]);
+          setActionStatus("");
+        } else {
+          console.log("Server start time matches. No action needed.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching server start time:", error);
+      });
+  }, []);
 
   // Listen to updates from the backend
   useEffect(() => {
@@ -44,13 +65,13 @@ const PlannedActionPanel = () => {
     };
   }, []);
 
-  // Save queue and action status to session storage
+  // Save queue and action status to local storage
   useEffect(() => {
-    sessionStorage.setItem("plannedActionQueue", JSON.stringify(queue));
+    localStorage.setItem("plannedActionQueue", JSON.stringify(queue));
   }, [queue]);
 
   useEffect(() => {
-    sessionStorage.setItem("actionStatus", actionStatus);
+    localStorage.setItem("actionStatus", actionStatus);
   }, [actionStatus]);
 
   return (

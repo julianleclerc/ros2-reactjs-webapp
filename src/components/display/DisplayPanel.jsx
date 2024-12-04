@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import "./DisplayPanel.css";
 import { io } from "socket.io-client";
 
+// Key to store server start time
+const SERVER_START_TIME_KEY = "serverStartTime";
+
 const DisplayPanel = () => {
   const [activeFeeds, setActiveFeeds] = useState(() => {
     const savedFeeds = localStorage.getItem("activeFeeds");
@@ -13,10 +16,40 @@ const DisplayPanel = () => {
   const cameraThrottleRef = useRef(false);
   const rvizThrottleRef = useRef(false);
 
+  // Check server start time on mount
+  useEffect(() => {
+    fetch("http://localhost:5000/server_start_time")
+      .then((response) => response.json())
+      .then((data) => {
+        const serverStartTime = data.server_start_time;
+        console.log("Received server start time:", serverStartTime);
+        const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
+        console.log("Stored server start time:", storedServerStartTime);
+
+        if (storedServerStartTime !== serverStartTime) {
+          console.log("Server start time mismatch. Clearing local storage.");
+          localStorage.clear();
+          localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
+
+          // Reset state
+          setActiveFeeds({ camera: false, rviz: false });
+          setCameraImage("");
+          setRvizImage("");
+        } else {
+          console.log("Server start time matches. No action needed.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching server start time:", error);
+      });
+  }, []);
+
+  // Save activeFeeds to local storage
   useEffect(() => {
     localStorage.setItem("activeFeeds", JSON.stringify(activeFeeds));
   }, [activeFeeds]);
 
+  // Manage WebSocket connections and feed subscriptions
   useEffect(() => {
     if (!socketRef.current) {
       socketRef.current = io("http://localhost:5000");
