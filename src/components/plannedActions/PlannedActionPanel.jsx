@@ -9,6 +9,9 @@ const socket = io("http://localhost:5000");
 const SERVER_START_TIME_KEY = "serverStartTime";
 
 const PlannedActionPanel = () => {
+  // ----------------- State Management -----------------
+
+  // State to track the planned action queue
   const [queue, setQueue] = useState(() => {
     const savedQueue = localStorage.getItem("plannedActionQueue");
     try {
@@ -19,28 +22,30 @@ const PlannedActionPanel = () => {
     }
   });
 
-  const [actionStatus, setActionStatus] = useState(() => localStorage.getItem("actionStatus") || "");
+  // State to track the current action status
+  const [actionStatus, setActionStatus] = useState(() =>
+    localStorage.getItem("actionStatus") || ""
+  );
 
-  // Check server start time on mount
+  // ----------------- useEffect Hooks -----------------
+
+  /**
+   * Checks the server start time on mount to validate localStorage data.
+   */
   useEffect(() => {
     fetch("http://localhost:5000/server_start_time")
       .then((response) => response.json())
       .then((data) => {
         const serverStartTime = data.server_start_time;
-        console.log("Received server start time:", serverStartTime);
         const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
-        console.log("Stored server start time:", storedServerStartTime);
 
         if (storedServerStartTime !== serverStartTime) {
-          console.log("Server start time mismatch. Clearing local storage.");
           localStorage.clear();
           localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
 
           // Reset state
           setQueue([]);
           setActionStatus("");
-        } else {
-          console.log("Server start time matches. No action needed.");
         }
       })
       .catch((error) => {
@@ -48,7 +53,10 @@ const PlannedActionPanel = () => {
       });
   }, []);
 
-  // Listen to updates from the backend
+  /**
+   * Sets up Socket.IO listeners for backend updates.
+   * Listens for `queue_update` and `action_status` events.
+   */
   useEffect(() => {
     socket.on("queue_update", (data) => {
       setQueue(data.queue || []);
@@ -65,18 +73,26 @@ const PlannedActionPanel = () => {
     };
   }, []);
 
-  // Save queue and action status to local storage
+  /**
+   * Saves the `queue` state to localStorage whenever it changes.
+   */
   useEffect(() => {
     localStorage.setItem("plannedActionQueue", JSON.stringify(queue));
   }, [queue]);
 
+  /**
+   * Saves the `actionStatus` state to localStorage whenever it changes.
+   */
   useEffect(() => {
     localStorage.setItem("actionStatus", actionStatus);
   }, [actionStatus]);
 
+  // -------------------- Render ------------------------
+
   return (
     <div className="planned-action-sub-panel">
       <div className="sub-container">
+        {/* Render the queue or a "No actions planned" message */}
         {queue.length === 0 ? (
           <div className="queue-item">
             <p>No actions planned</p>
@@ -85,7 +101,9 @@ const PlannedActionPanel = () => {
           queue.map((action, index) => (
             <div
               key={index}
-              className={`queue-item ${index === 0 && actionStatus ? `status-${actionStatus}` : ""}`}
+              className={`queue-item ${
+                index === 0 && actionStatus ? `status-${actionStatus}` : ""
+              }`}
             >
               <h3>Action {index + 1}</h3>
               <ul>

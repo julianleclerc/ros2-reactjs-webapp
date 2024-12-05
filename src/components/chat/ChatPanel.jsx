@@ -1,43 +1,72 @@
-// src/components/chat/ChatPanel.jsx
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./ChatPanel.css";
 import io from "socket.io-client";
 
-// Socket.IO configuration
+// Socket.IO configuration: Connects the front end to the backend server at the specified address
 const socket = io("http://localhost:5000");
 
-// Key to store server start time
+// Key to store the server start time in localStorage
+// Used to ensure the session data remains valid between server restarts
 const SERVER_START_TIME_KEY = "serverStartTime";
 
 const ChatPanel = () => {
+  // ----------------- State Management -----------------
+
+  // State to manage the chat tabs
   const [tabs, setTabs] = useState(() =>
     loadFromStorage("chatTabs", [{ name: "Global", namespace: null }])
   );
+
+  // State to track the currently active chat tab
   const [activeTab, setActiveTab] = useState("Global");
+
+  // State to store chat messages for each tab
   const [messages, setMessages] = useState(() =>
     loadFromStorage("chatMessages", { Global: [] })
   );
+
+  // State for the current message input
   const [input, setInput] = useState("");
+
+  // Reference to the chat log DOM element for scrolling functionality
   const chatLogRef = useRef(null);
 
   // ----------------- Helper Functions -----------------
 
+  /**
+   * Loads data from localStorage.
+   * @param {string} key - The key to retrieve from storage.
+   * @param {any} defaultValue - The default value to return if the key doesn't exist.
+   * @returns The stored data or the default value.
+   */
   function loadFromStorage(key, defaultValue) {
     const savedData = localStorage.getItem(key);
     return savedData ? JSON.parse(savedData) : defaultValue;
   }
 
+  /**
+   * Saves data to localStorage.
+   * @param {string} key - The key to store the data under.
+   * @param {any} value - The value to store.
+   */
   function saveToStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  /**
+   * Automatically scrolls the chat log to the bottom.
+   */
   function autoScrollToBottom() {
     if (chatLogRef.current) {
       chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
     }
   }
 
+  /**
+   * Updates messages in a specific tab.
+   * @param {string} tabName - The name of the tab to update.
+   * @param {object} newMessage - The new message to add.
+   */
   function updateMessages(tabName, newMessage) {
     setMessages((prevMessages) => ({
       ...prevMessages,
@@ -45,6 +74,10 @@ const ChatPanel = () => {
     }));
   }
 
+  /**
+   * Sends a message to the backend server.
+   * @param {object} request - The message request payload.
+   */
   async function sendMessageToBackend(request) {
     try {
       const response = await fetch("http://localhost:5000/send_message", {
@@ -54,6 +87,7 @@ const ChatPanel = () => {
       });
 
       if (!response.ok) throw new Error("Failed to send message");
+
       const data = await response.json();
       updateMessages(activeTab, {
         user: "ROS",
@@ -70,6 +104,11 @@ const ChatPanel = () => {
     }
   }
 
+  // ----------------- Event Handlers -----------------
+
+  /**
+   * Handles sending a message from the user.
+   */
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -81,6 +120,9 @@ const ChatPanel = () => {
     await sendMessageToBackend(request);
   };
 
+  /**
+   * Handles adding a new chat tab with a namespace.
+   */
   const handleAddTab = () => {
     const namespace = prompt("Enter the robot namespace:");
     if (!namespace) return;
@@ -94,6 +136,10 @@ const ChatPanel = () => {
     setMessages((prevMessages) => ({ ...prevMessages, [namespace]: [] }));
   };
 
+  /**
+   * Handles the Enter key for sending messages.
+   * @param {object} e - The keyboard event.
+   */
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -101,10 +147,17 @@ const ChatPanel = () => {
     }
   };
 
+  /**
+   * Simulates a voice prompt action (placeholder).
+   */
   const handleVoicePrompt = () => alert("Voice Prompt Activated! (🎙️)");
 
   // ----------------- Socket Listener Setup -----------------
 
+  /**
+   * Sets up a listener for receiving messages from ROS via Socket.IO.
+   * @returns Cleanup function to remove the listener.
+   */
   const setupSocketListener = useCallback(() => {
     const handleRosMessage = (data) => {
       updateMessages("Global", {
@@ -124,18 +177,15 @@ const ChatPanel = () => {
 
   // ----------------- useEffect Hooks -----------------
 
-  // Check server start time on mount
+  // Checks the server start time on mount to validate localStorage data
   useEffect(() => {
     fetch("http://localhost:5000/server_start_time")
       .then((response) => response.json())
       .then((data) => {
         const serverStartTime = data.server_start_time;
-        console.log("Received server start time:", serverStartTime);
         const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
-        console.log("Stored server start time:", storedServerStartTime);
 
         if (storedServerStartTime !== serverStartTime) {
-          console.log("Server start time mismatch. Clearing local storage.");
           localStorage.clear();
           localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
 
@@ -143,8 +193,6 @@ const ChatPanel = () => {
           setTabs([{ name: "Global", namespace: null }]);
           setMessages({ Global: [] });
           setActiveTab("Global");
-        } else {
-          console.log("Server start time matches. No action needed.");
         }
       })
       .catch((error) => {
@@ -152,22 +200,23 @@ const ChatPanel = () => {
       });
   }, []);
 
-  // Save tabs and messages to local storage
+  // Saves tabs and messages to localStorage whenever they change
   useEffect(() => saveToStorage("chatTabs", tabs), [tabs]);
   useEffect(() => saveToStorage("chatMessages", messages), [messages]);
 
-  // Setup Socket Listener
+  // Sets up the Socket.IO listener
   useEffect(() => {
     const cleanup = setupSocketListener();
     return cleanup;
   }, [setupSocketListener]);
 
-  // Auto-scroll to bottom when messages or activeTab change
+  // Automatically scrolls to the bottom of the chat log when messages or activeTab change
   useEffect(() => {
     autoScrollToBottom();
   }, [messages, activeTab]);
 
   // -------------------- Render ------------------------
+
   return (
     <div className="chat-sub-panel">
       <div className="chat-container">

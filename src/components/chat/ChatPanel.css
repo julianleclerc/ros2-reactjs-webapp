@@ -7,7 +7,6 @@
     height: 100%;
     width: 100%;
     overflow: auto;
-    min-width: 0;
 }
 
 /* Chat container styling */
@@ -21,7 +20,6 @@
     height: 100%;
     overflow: scroll;
     padding: 20px;
-    min-width: 200;
 }
 
 /* ------------------------- Tab Navigation ------------------------- */
@@ -33,8 +31,7 @@
     margin-bottom: 10px;
     gap: 5px;
     height: 50px;
-    overflow: hidden; /* Prevent horizontal overflow */
-    min-width: 0; /* Allow the container to shrink */
+    overflow: hidden;
 }
 
 /* Add tab button styling */
@@ -46,23 +43,22 @@
     color: white;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    flex-shrink: 0; /* Do not shrink the button */
+    flex-shrink: 0;
 }
 
 /* Scrollable tabs container */
 .tabs-scrollable {
     display: flex;
-    overflow-x: auto; /* Enable horizontal scrolling */
-    overflow-y: hidden; /* Hide vertical overflow */
+    overflow-x: auto;
+    overflow-y: hidden;
     flex: 1;
     gap: 10px;
     padding: 0 10px;
-    min-width: 0; /* Allow the container to shrink */
 }
 
 /* Hide scrollbar if desired */
 .tabs-scrollable::-webkit-scrollbar {
-    display: none; /* Hide scrollbar in WebKit browsers */
+    display: none;
 }
 
 /* Individual tab button styling */
@@ -126,8 +122,6 @@
     flex-shrink: 0;
     height: 60px;
     overflow: hidden;
-    min-width: 0; 
-
 }
 
 /* Input field styling */
@@ -138,7 +132,6 @@
     border-radius: 5px;
     font-size: 16px;
     background-color: #eee; 
-    min-width: 20px; 
     z-index: 11;
 
 }
@@ -153,7 +146,7 @@
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    flex-shrink: 0; /* Do not shrink the button */
+    flex-shrink: 0; 
 }
 
 /* Hover effect for the button */

@@ -6,28 +6,49 @@ import { io } from "socket.io-client";
 const SERVER_START_TIME_KEY = "serverStartTime";
 
 const DisplayPanel = () => {
+  // ----------------- State Management -----------------
+
+  // State to track active feeds for camera and RViz
   const [activeFeeds, setActiveFeeds] = useState(() => {
     const savedFeeds = localStorage.getItem("activeFeeds");
     return savedFeeds ? JSON.parse(savedFeeds) : { camera: false, rviz: false };
   });
+
+  // State to store the current camera and RViz images
   const [cameraImage, setCameraImage] = useState("");
   const [rvizImage, setRvizImage] = useState("");
+
+  // References for WebSocket and throttling mechanisms
   const socketRef = useRef(null);
   const cameraThrottleRef = useRef(false);
   const rvizThrottleRef = useRef(false);
 
-  // Check server start time on mount
+  // ----------------- Helper Functions -----------------
+
+  /**
+   * Toggles the state of a specific feed (camera or RViz).
+   * @param {string} feed - The name of the feed to toggle.
+   */
+  const handleFeedToggle = (feed) => {
+    setActiveFeeds((prevFeeds) => ({
+      ...prevFeeds,
+      [feed]: !prevFeeds[feed],
+    }));
+  };
+
+  // ----------------- useEffect Hooks -----------------
+
+  /**
+   * Checks the server start time on mount to validate localStorage data or restart button.
+   */
   useEffect(() => {
     fetch("http://localhost:5000/server_start_time")
       .then((response) => response.json())
       .then((data) => {
         const serverStartTime = data.server_start_time;
-        console.log("Received server start time:", serverStartTime);
         const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
-        console.log("Stored server start time:", storedServerStartTime);
 
         if (storedServerStartTime !== serverStartTime) {
-          console.log("Server start time mismatch. Clearing local storage.");
           localStorage.clear();
           localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
 
@@ -35,8 +56,6 @@ const DisplayPanel = () => {
           setActiveFeeds({ camera: false, rviz: false });
           setCameraImage("");
           setRvizImage("");
-        } else {
-          console.log("Server start time matches. No action needed.");
         }
       })
       .catch((error) => {
@@ -44,12 +63,17 @@ const DisplayPanel = () => {
       });
   }, []);
 
-  // Save activeFeeds to local storage
+  /**
+   * Saves the `activeFeeds` state to localStorage whenever it changes.
+   */
   useEffect(() => {
     localStorage.setItem("activeFeeds", JSON.stringify(activeFeeds));
   }, [activeFeeds]);
 
-  // Manage WebSocket connections and feed subscriptions
+  /**                                                                               
+   * Sets up WebSocket connections and listeners for camera and RViz feeds.
+   * Disconnects on component unmount or when activeFeeds changes.
+   */
   useEffect(() => {
     if (!socketRef.current) {
       socketRef.current = io("http://localhost:5000");
@@ -83,6 +107,9 @@ const DisplayPanel = () => {
     };
   }, [activeFeeds]);
 
+  /**
+   * Manages feed subscriptions based on the `activeFeeds` state.
+   */
   useEffect(() => {
     if (socketRef.current) {
       if (activeFeeds.camera) {
@@ -101,13 +128,9 @@ const DisplayPanel = () => {
     }
   }, [activeFeeds]);
 
-  const handleFeedToggle = (feed) => {
-    setActiveFeeds((prevFeeds) => ({
-      ...prevFeeds,
-      [feed]: !prevFeeds[feed],
-    }));
-  };
+  // -------------------- Render ------------------------
 
+  // In the future, should have one button that lets us choose from list what feeds we wish to render and they should stack automatically
   const multipleFeedsActive = activeFeeds.camera && activeFeeds.rviz;
 
   return (
