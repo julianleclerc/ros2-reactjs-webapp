@@ -78,3 +78,8 @@
 .status-stopped {
   background-color: #E57373 !important;
 }
+
+.status-error_handling {
+  background-color: #73c1e5 !important;
+}
+
