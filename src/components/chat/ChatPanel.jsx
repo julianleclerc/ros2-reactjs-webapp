@@ -89,11 +89,15 @@ const ChatPanel = () => {
       if (!response.ok) throw new Error("Failed to send message");
 
       const data = await response.json();
-      updateMessages(activeTab, {
-        user: "ROS",
-        message: data.response,
-        type: "default",
-      });
+      
+      // Only update the chat with a "ROS" message if data.response exists
+      if (data.response) {
+        updateMessages(activeTab, {
+          user: "ROS",
+          message: data.response,
+          type: "default",
+        });
+      }
     } catch (error) {
       console.error("Error:", error.message);
       updateMessages(activeTab, {

@@ -17,7 +17,7 @@ def init_routes(app, ros2_node, socketio):
         - message: The message to send.
 
         Responses:
-        - 200: Success with a response message.
+        - 200: Success with a response message or an empty response if prompt_response was handled.
         - 500: Error when ROS2 node is not initialized or response fails.
         """
         try: 
@@ -34,7 +34,8 @@ def init_routes(app, ros2_node, socketio):
                 if ros2_node.next_message_to_prompt_response:
                     ros2_node.publish_prompt_response(message)
                     ros2_node.next_message_to_prompt_response = False
-                    return jsonify({'response': 'Message sent to /prompt_response'})
+                    # Return an empty JSON to indicate success but no message for chat
+                    return jsonify({}), 200
 
                 # Call the chat service for normal messages
                 response = ros2_node.call_chat_service(message)
