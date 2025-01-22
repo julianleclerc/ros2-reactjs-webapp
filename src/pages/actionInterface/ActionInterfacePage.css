@@ -2,7 +2,7 @@
 
 .action-interface-page {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     width: 100%;
     height: 100%;
     background-color: #1a1a1a;
@@ -11,8 +11,19 @@
 
 /* ------------------------- Planned Action Panel ------------------------- */
 
-.action-interface-page .planned-action-panel {
+.action-interface-page .graph-list-panel {
     flex: 1;
+    margin: 0 10px; /* Horizontal padding between panels */
     width: 480px;
+    max-width: 380px; /* Limit the maximum width */
+    box-sizing: border-box;
+}
+
+/* ------------------------- Node Editor Panel ------------------------- */
+
+.action-interface-page .node-editor-panel {
+    flex: 1;
+    margin: 0 10px;
+    width: 900px;
     box-sizing: border-box;
 }

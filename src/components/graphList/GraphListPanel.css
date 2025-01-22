@@ -1,0 +1,37 @@
+.item-container {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    background-color: #bebebe; 
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    height:100%;
+    border-radius: 10px;
+}
+
+.item-container button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #666;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.item-container button:hover {
+    background-color: #555;
+    transform: scale(1.02);
+}
+
+/* Add styles for the active button */
+.item-container button.active {
+    background-color: #007bff;
+    color: #fff;
+    border: 1px solid #007bff;
+}
