@@ -5,8 +5,13 @@ import threading
 import time
 import os
 import json
+import rclpy
+from temoto_msgs.srv import UmrfGraphGet
+
 
 app = Flask(__name__)
+app.config['DEBUG'] = True
+
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
@@ -59,6 +64,53 @@ def handle_disconnect():
 #     new_graph = {"name": "graph_name_3.json", "status": "active", "data": { /* JSON data for graph_name_3 */ }}
 #     items.append(new_graph)
 #     socketio.emit('updateItems', items)
+
+
+def get_umrf_graphs():
+    rclpy.init()
+    node = rclpy.create_node('react_service_client')
+
+    client = node.create_client(UmrfGraphGet, 'umrf_graph_get')
+    while not client.wait_for_service(timeout_sec=1.0):
+        node.get_logger().info('Service not available, waiting again...')
+    
+    # Create a request for the UmrfGraphGet service
+    request = UmrfGraphGet.Request()
+    future = client.call_async(request)
+    rclpy.spin_until_future_complete(node, future)    
+    result = future.result()
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+    if result:
+        # Return the actual vectors from the service response
+        return {
+            "graph_jsons_indexed": result.graph_jsons_indexed,
+            "graph_jsons_running": result.graph_jsons_running
+        }
+    else:
+        return None  # Return None if the service call was not successful
+
+@app.route('/get-umrf-graphs-ros-service', methods=['POST'])
+def get_umrf_graphs_service():
+    try:
+        app.logger.info('Received POST request on /get-umrf-graphs-ros-service')
+        result_data = get_umrf_graphs()  # Call ROS2 service
+        
+        if result_data:
+            app.logger.info('Service call successful')
+            # Return the result data (graph_jsons_indexed, graph_jsons_running)
+            return jsonify(result_data), 200
+        else:
+            app.logger.error('Service call failed')
+            return jsonify({'message': 'Service call failed!'}), 500
+    except Exception as e:
+        app.logger.error(f'Error: {e}')
+        return jsonify({'message': 'An error occurred: ' + str(e)}), 500
+
+
+
 
 if __name__ == '__main__':
     # # Start the background thread that adds an item after 5 seconds

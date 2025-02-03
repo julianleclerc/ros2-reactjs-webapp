@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import MenuPanel from "../components/menu/MenuPanel";
 import ActionInterfacePage from "../pages/actionInterface/ActionInterfacePage";
+//import CallGetUmrfGraphsButton from "../components/ServiceButton/CallGetUmrfGraphsButton";
+import GraphPanel from "../components/ServiceButton/GraphPanel";
 import useWindowDimensions from "../hooks/useWindowDimensions";
 
 const App = () => {
@@ -25,9 +27,19 @@ const App = () => {
   const renderPage = () => {
     switch (currentPage) {
       case "ActionInterfacePage":
-        return <ActionInterfacePage />;
+        return (
+          <div>
+            <ActionInterfacePage />
+            <GraphPanel /> {/* Button added here */}
+          </div>
+        );
       default:
-        return <ActionInterfacePage />;
+        return (
+          <div>
+            <ActionInterfacePage />
+            <GraphPanel /> {/* Button added here */}
+          </div>
+        );
     }
   };
 
