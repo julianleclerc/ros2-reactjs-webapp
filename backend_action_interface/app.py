@@ -23,7 +23,7 @@ def load_graphs():
     return graphs
 
 graphs = load_graphs()
-graph_names = [key for key in graphs]
+
 
 @app.route('/api/graphs/<key>', methods=['GET'])
 def get_graph(key):
@@ -42,13 +42,36 @@ def set_graph(key):
         # print (f'data   {json.dumps(new_data, indent=4)}')
         return jsonify({"message": "Graph updated successfully"}), 200
     else:
-        print ("no jesbos")
+        return jsonify({"error": "Graph not found"}), 404
+
+@app.route('/api/graphs/exec/<key>', methods=['PUT'])
+def exec_graph(key):
+    if key in graphs:
+        if "graph_state" not in graphs[key]:
+            graphs[key]["graph_state"] = "RUNNING"
+            print (f'Running graph "{key}"')
+
+        elif graphs[key]["graph_state"] != "RUNNING":
+            graphs[key]["graph_state"] = "RUNNING"
+            print (f'Running graph "{key}"')
+
+        elif graphs[key]["graph_state"] == "RUNNING":
+            graphs[key]["graph_state"] = "STOPPED"
+            print (f'Stopping graph "{key}"')
+
+        graphs_list = list(graphs.values())
+        socketio.emit('graphs', graphs_list)
+
+        return jsonify({"message": "Graph updated successfully"}), 200
+    else:
         return jsonify({"error": "Graph not found"}), 404
 
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
-    socketio.emit('graphNames', graph_names)
+
+    graphs_list = list(graphs.values())
+    socketio.emit('graphs', graphs_list)
 
 @socketio.on('disconnect')
 def handle_disconnect():

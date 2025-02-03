@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import GraphListPanel from "../../components/graphList/GraphListPanel.jsx";
 import NodeEditorPanel from "../../components/nodeEditor/NodeEditorPanel.jsx";
@@ -6,12 +6,20 @@ import "./ActionInterfacePage.css";
 
 const ActionInterfacePage = () => {
 
-    const [graphNames, setGraphNames] = useState(null);
+    const [graphs, setGraphs] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null);
+    const nodeEditorRef = useRef();
 
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
 
+        // Make the NodeEditorPanel spit out currently active graph,
+        // which gets saved in the handleGetCurrentGraph
+        if (nodeEditorRef.current) {
+            nodeEditorRef.current.getCurrentGraph();
+        }
+
+        // Fetch the new graph
         try {
             const response = await fetch(`http://localhost:4000/api/graphs/${graphName}`);
             if (!response.ok) {
@@ -26,7 +34,7 @@ const ActionInterfacePage = () => {
         }
     };
 
-    const handleUpdateGraph = async (updatedGraph) => {
+    const handleGetCurrentGraph = async (updatedGraph) => {
         try {
             const response = await fetch(`http://localhost:4000/api/graphs/${updatedGraph.graph_name}`, {
                 method: 'PUT',
@@ -47,11 +55,32 @@ const ActionInterfacePage = () => {
         }
     };
 
+    const handleStartStopClick = async (graphName) => {
+        try {
+            const response = await fetch(`http://localhost:4000/api/graphs/exec/${graphName}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+            console.log(result.message);
+
+        } catch (error) {
+            console.error('Error updating graph:', error);
+        }
+    };
+
     useEffect(() => {
         const socket = io('http://localhost:4000');
 
-        socket.on('graphNames', (data) => {
-            setGraphNames(data);
+        socket.on('graphs', (data) => {
+            setGraphs(data);
         });
 
         return () => {
@@ -62,11 +91,11 @@ const ActionInterfacePage = () => {
     return (
         <div className="action-interface-page">
             <div className="graph-list-panel">
-                <GraphListPanel graphNamesIn={graphNames} onGraphSelect={handleGraphSelect}/>
+                <GraphListPanel graphsIn={graphs} onGraphSelect={handleGraphSelect} onStartStopClick={handleStartStopClick}/>
             </div>
 
             <div className="node-editor-panel">
-                <NodeEditorPanel graphDataIn={selectedGraph} onUpdateGraph={handleUpdateGraph}/>
+                <NodeEditorPanel ref={nodeEditorRef} graphDataIn={selectedGraph} onUpdateGraph={handleGetCurrentGraph}/>
             </div>
         </div>
     );
