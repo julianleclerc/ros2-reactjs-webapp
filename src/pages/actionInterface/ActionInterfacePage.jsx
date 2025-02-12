@@ -8,6 +8,7 @@ const ActionInterfacePage = () => {
 
     const [graphs, setGraphs] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null);
+    const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
 
     const handleGraphSelect = async (graphName) => {
@@ -83,6 +84,10 @@ const ActionInterfacePage = () => {
             setGraphs(data);
         });
 
+        socket.on('runtime_enabled', (data) => {
+            setRuntimeEnabled(data);
+        });
+
         return () => {
             socket.disconnect();
         };
@@ -91,11 +96,18 @@ const ActionInterfacePage = () => {
     return (
         <div className="action-interface-page">
             <div className="graph-list-panel">
-                <GraphListPanel graphsIn={graphs} onGraphSelect={handleGraphSelect} onStartStopClick={handleStartStopClick}/>
+                <GraphListPanel
+                    graphsIn={graphs}
+                    onGraphSelect={handleGraphSelect}
+                    onStartStopClick={handleStartStopClick}
+                    runtimeEnabled={runtimeEnabled}/>
             </div>
 
             <div className="node-editor-panel">
-                <NodeEditorPanel ref={nodeEditorRef} graphDataIn={selectedGraph} onUpdateGraph={handleGetCurrentGraph}/>
+                <NodeEditorPanel
+                    ref={nodeEditorRef}
+                    graphDataIn={selectedGraph}
+                    onUpdateGraph={handleGetCurrentGraph}/>
             </div>
         </div>
     );

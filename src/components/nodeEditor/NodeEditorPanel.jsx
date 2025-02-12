@@ -44,7 +44,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
 
       let nodeData = {
         title: action.name,
-        subline: action.state ? action.state : '',
+        subline: action.state && action.state !== 'UNINITIALIZED' ? action.state : '',
         instance_id: action.instance_id,
         type: action.type,
         input_parameters: action.input_parameters,

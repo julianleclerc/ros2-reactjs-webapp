@@ -1,29 +1,28 @@
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO
 from flask_cors import CORS
-import threading
-import time
+
+import argparse
 import os
 import json
+import time
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
-# Directory containing the JSON files
-GRAPHS_DIR = 'example_graphs'
+runtime_enabled = False
+graphs = {}
+ri_node = None # TODO: ideally the ros node should not be exposed like that
 
-def load_graphs():
+def load_graphs(graphs_dir):
     graphs = {}
-    for filename in os.listdir(GRAPHS_DIR):
+    for filename in os.listdir(graphs_dir):
         if filename.endswith('.json'):
-            with open(os.path.join(GRAPHS_DIR, filename), 'r') as file:
+            with open(os.path.join(graphs_dir, filename), 'r') as file:
                 graph = json.load(file)
                 graphs[graph["graph_name"]] = graph
     return graphs
-
-graphs = load_graphs()
-
 
 @app.route('/api/graphs/<key>', methods=['GET'])
 def get_graph(key):
@@ -47,16 +46,12 @@ def set_graph(key):
 @app.route('/api/graphs/exec/<key>', methods=['PUT'])
 def exec_graph(key):
     if key in graphs:
-        if "graph_state" not in graphs[key]:
-            graphs[key]["graph_state"] = "RUNNING"
-            print (f'Running graph "{key}"')
-
-        elif graphs[key]["graph_state"] != "RUNNING":
-            graphs[key]["graph_state"] = "RUNNING"
+        if "graph_state" not in graphs[key] or graphs[key]["graph_state"] != "RUNNING":
+            ri_node.start_graph(key)
             print (f'Running graph "{key}"')
 
         elif graphs[key]["graph_state"] == "RUNNING":
-            graphs[key]["graph_state"] = "STOPPED"
+            ri_node.stop_graph(key)
             print (f'Stopping graph "{key}"')
 
         graphs_list = list(graphs.values())
@@ -70,6 +65,8 @@ def exec_graph(key):
 def handle_connect():
     print('Client connected')
 
+    socketio.emit('runtime_enabled', runtime_enabled)
+
     graphs_list = list(graphs.values())
     socketio.emit('graphs', graphs_list)
 
@@ -77,13 +74,29 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
-# def add_item():
-#     time.sleep(5)
-#     new_graph = {"name": "graph_name_3.json", "status": "active", "data": { /* JSON data for graph_name_3 */ }}
-#     items.append(new_graph)
-#     socketio.emit('updateItems', items)
-
 if __name__ == '__main__':
-    # # Start the background thread that adds an item after 5 seconds
-    # threading.Thread(target=add_item).start()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--runtime', action='store_true', help='Enable run-time task monitoring.')
+    args, unknown = parser.parse_known_args()
+
+    runtime_enabled = args.runtime
+
+    if runtime_enabled:
+        import ros_interface as ri
+
+        ri.run_ros_interface_thread()
+        ri.wait_until_initialized()
+        ri_node = ri.node
+
+        graphs_indexed, graphs_running = ri.get_graphs()
+
+        for g in graphs_indexed:
+            g_json = json.loads(g)
+            graphs[g_json["graph_name"]] = g_json
+
+        print (" * ROS interface active")
+    else:
+        graphs = load_graphs("example_graphs")
+
     socketio.run(app, host='0.0.0.0', port=4000)
