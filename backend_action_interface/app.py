@@ -15,15 +15,6 @@ runtime_enabled = False
 graphs = {}
 ri_node = None # TODO: ideally the ros node should not be exposed like that
 
-def load_graphs(graphs_dir):
-    graphs = {}
-    for filename in os.listdir(graphs_dir):
-        if filename.endswith('.json'):
-            with open(os.path.join(graphs_dir, filename), 'r') as file:
-                graph = json.load(file)
-                graphs[graph["graph_name"]] = graph
-    return graphs
-
 @app.route('/api/graphs/<key>', methods=['GET'])
 def get_graph(key):
     value = graphs.get(key)
@@ -54,10 +45,10 @@ def exec_graph(key):
             ri_node.stop_graph(key)
             print (f'Stopping graph "{key}"')
 
-        graphs_list = list(graphs.values())
-        socketio.emit('graphs', graphs_list)
+        # graphs_list = list(graphs.values())
+        # socketio.emit('graphs', graphs_list)
 
-        return jsonify({"message": "Graph updated successfully"}), 200
+        return jsonify({"message": "Started graph"}), 200
     else:
         return jsonify({"error": "Graph not found"}), 404
 
@@ -74,6 +65,25 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+def load_graphs(graphs_dir):
+    graphs = {}
+    for filename in os.listdir(graphs_dir):
+        if filename.endswith('.json'):
+            with open(os.path.join(graphs_dir, filename), 'r') as file:
+                graph = json.load(file)
+                graphs[graph["graph_name"]] = graph
+    return graphs
+
+def graph_feedback_callback(actor, graphs_in):
+    global graphs
+
+    for g in graphs_in:
+        g_json = json.loads(g)
+        graphs[g_json["graph_name"]] = g_json
+
+    graphs_list = list(graphs.values())
+    socketio.emit('graphs', graphs_list)
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -85,7 +95,7 @@ if __name__ == '__main__':
     if runtime_enabled:
         import ros_interface as ri
 
-        ri.run_ros_interface_thread()
+        ri.run_ros_interface_thread(graph_feedback_callback)
         ri.wait_until_initialized()
         ri_node = ri.node
 

@@ -24,7 +24,7 @@ const nodeTypes = {
 
 const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
 
-  const [activeGraph, setActiveGraph] = useState({});
+  const [activeGraph, setActiveGraph] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState();
   const [edges, setEdges, onEdgesChange] = useEdgesState();
   const [rfInstance, setRfInstance] = useState(null);
@@ -137,7 +137,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
         });
     }
 
-      return activeGraphUpdated;
+    return activeGraphUpdated;
   }, [activeGraph, rfInstance]);
 
   useEffect(() => {
