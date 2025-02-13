@@ -14,6 +14,11 @@ const ActionInterfacePage = () => {
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
 
+        // Ignore clicks on the same active graph name
+        if (selectedGraph && selectedGraph.graph_name === graphName) {
+            return;
+        }
+
         // Make the NodeEditorPanel spit out currently active graph,
         // which gets saved in the handleGetCurrentGraph
         if (nodeEditorRef.current) {
@@ -92,6 +97,13 @@ const ActionInterfacePage = () => {
             socket.disconnect();
         };
     }, []);
+
+    // Update the rendered graph when the state changes
+    useEffect(() => {
+        if (graphs && selectedGraph) {
+            setSelectedGraph(graphs.find(graph => graph.graph_name === selectedGraph.graph_name));
+        }
+    }, [graphs]);
 
     return (
         <div className="action-interface-page">

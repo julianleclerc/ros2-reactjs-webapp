@@ -22,8 +22,9 @@ def get_graphs():
 class RosInterface(Node):
 	"""A ROS2 Node that prints to the console periodically."""
 
-	def __init__(self):
+	def __init__(self, graph_feedback_cb_parent):
 		super().__init__('action_designer_runtime')
+		self.graph_feedback_cb_parent = graph_feedback_cb_parent
 
 		self.umrf_graph_start_pub = self.create_publisher(UmrfGraphStart, 'umrf_graph_start', 10)
 		self.umrf_graph_stop_pub = self.create_publisher(UmrfGraphStop, 'umrf_graph_stop', 10)
@@ -59,14 +60,14 @@ class RosInterface(Node):
 		self.umrf_graph_stop_pub.publish(msg)
 
 	def umrf_graph_feedback_cb(self, msg):
-		print ('got graph feedback')
+		self.graph_feedback_cb_parent(msg.actor, msg.history)
 
-def run_ros_interface():
+def run_ros_interface(graph_feedback_callback):
 
 	global node
 
 	rclpy.init()
-	node = RosInterface()
+	node = RosInterface(graph_feedback_callback)
 
 	try:
 		rclpy.spin(node)
@@ -78,7 +79,7 @@ def run_ros_interface():
 		# TODO: implement a proper clean-up by capturing the SIGINT
 		node.get_logger().info("External shutdown signal received, stopping ROS2 node.")
 
-def run_ros_interface_thread():
+def run_ros_interface_thread(graph_feedback_callback):
 
-	thread = threading.Thread(target=run_ros_interface)
+	thread = threading.Thread(target=run_ros_interface, args=(graph_feedback_callback,))
 	thread.start()
