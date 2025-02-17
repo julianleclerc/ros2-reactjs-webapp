@@ -42,7 +42,7 @@ const DisplayPanel = () => {
    * Checks the server start time on mount to validate localStorage data or restart button.
    */
   useEffect(() => {
-    fetch("http://localhost:5000/server_start_time")
+    fetch("http://localhost:4000/server_start_time")
       .then((response) => response.json())
       .then((data) => {
         const serverStartTime = data.server_start_time;
@@ -76,7 +76,7 @@ const DisplayPanel = () => {
    */
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = io("http://localhost:5000");
+      socketRef.current = io("http://localhost:4000");
 
       socketRef.current.on("camera_image", (data) => {
         if (activeFeeds.camera && !cameraThrottleRef.current) {

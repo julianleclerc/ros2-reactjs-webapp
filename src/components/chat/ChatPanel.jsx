@@ -3,7 +3,7 @@ import "./ChatPanel.css";
 import io from "socket.io-client";
 
 // Socket.IO configuration: Connects the front end to the backend server at the specified address
-const socket = io("http://localhost:5000");
+const socket = io("http://localhost:4000");
 
 // Key to store the server start time in localStorage
 // Used to ensure the session data remains valid between server restarts
@@ -80,7 +80,7 @@ const ChatPanel = () => {
    */
   async function sendMessageToBackend(request) {
     try {
-      const response = await fetch("http://localhost:5000/send_message", {
+      const response = await fetch("http://localhost:4000/send_message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
@@ -183,7 +183,7 @@ const ChatPanel = () => {
 
   // Checks the server start time on mount to validate localStorage data
   useEffect(() => {
-    fetch("http://localhost:5000/server_start_time")
+    fetch("http://localhost:4000/server_start_time")
       .then((response) => response.json())
       .then((data) => {
         const serverStartTime = data.server_start_time;

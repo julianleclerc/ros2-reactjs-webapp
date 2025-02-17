@@ -6,6 +6,7 @@ import argparse
 import os
 import json
 import time
+import datetime
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -13,7 +14,9 @@ socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
 runtime_enabled = False
 graphs = {}
-ri_node = None # TODO: ideally the ros node should not be exposed like that
+ri_node = None  # TODO: ideally the ros node should not be exposed like that
+
+### ACTION INTERFACE I/O
 
 @app.route('/api/graphs/<key>', methods=['GET'])
 def get_graph(key):
@@ -28,8 +31,7 @@ def set_graph(key):
     if key in graphs:
         new_data = request.get_json()
         graphs[key] = new_data
-        print (f'Updated graph: {key}')
-        # print (f'data   {json.dumps(new_data, indent=4)}')
+        print(f'Updated graph: {key}')
         return jsonify({"message": "Graph updated successfully"}), 200
     else:
         return jsonify({"error": "Graph not found"}), 404
@@ -39,14 +41,10 @@ def exec_graph(key):
     if key in graphs:
         if "graph_state" not in graphs[key] or graphs[key]["graph_state"] != "RUNNING":
             ri_node.start_graph(key)
-            print (f'Running graph "{key}"')
-
+            print(f'Running graph "{key}"')
         elif graphs[key]["graph_state"] == "RUNNING":
             ri_node.stop_graph(key)
-            print (f'Stopping graph "{key}"')
-
-        # graphs_list = list(graphs.values())
-        # socketio.emit('graphs', graphs_list)
+            print(f'Stopping graph "{key}"')
 
         return jsonify({"message": "Started graph"}), 200
     else:
@@ -55,9 +53,7 @@ def exec_graph(key):
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
-
     socketio.emit('runtime_enabled', runtime_enabled)
-
     graphs_list = list(graphs.values())
     socketio.emit('graphs', graphs_list)
 
@@ -76,13 +72,38 @@ def load_graphs(graphs_dir):
 
 def graph_feedback_callback(actor, graphs_in):
     global graphs
-
     for g in graphs_in:
         g_json = json.loads(g)
         graphs[g_json["graph_name"]] = g_json
-
     graphs_list = list(graphs.values())
     socketio.emit('graphs', graphs_list)
+
+### CHAT INTERFACE I/O
+
+@app.route('/send_message', methods=['POST'])
+def http_send_message():
+    data = request.get_json()
+    message = data.get("message")
+    if ri_node and message:
+        ri_node.send_chat_message(message)
+        return jsonify({"debug": "Message sent"}), 200
+    else:
+        return jsonify({"error": "Unable to send message"}), 400
+        
+
+def chat_feedback_callback(message):
+    print(f"[DEBUG] In chat_feedback_callback with message: {message}")
+    socketio.emit('ros_message', {"user": "TeMoto", "message": message})
+    print("[DEBUG] Emitted ros_message event")
+
+### Server start time to save storage
+
+SERVER_START_TIME = datetime.datetime.utcnow().isoformat() + "Z"
+
+@app.route('/server_start_time', methods=['GET'])
+def get_server_start_time():
+    return jsonify({"server_start_time": SERVER_START_TIME}), 200
+
 
 if __name__ == '__main__':
 
@@ -95,7 +116,8 @@ if __name__ == '__main__':
     if runtime_enabled:
         import ros_interface as ri
 
-        ri.run_ros_interface_thread(graph_feedback_callback)
+        # Pass both the graph and chat feedback callbacks
+        ri.run_ros_interface_thread(graph_feedback_callback, chat_feedback_callback)
         ri.wait_until_initialized()
         ri_node = ri.node
 
@@ -105,7 +127,7 @@ if __name__ == '__main__':
             g_json = json.loads(g)
             graphs[g_json["graph_name"]] = g_json
 
-        print (" * ROS interface active")
+        print(" * ROS interface active")
     else:
         graphs = load_graphs("example_graphs")
 

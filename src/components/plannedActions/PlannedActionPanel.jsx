@@ -3,7 +3,7 @@ import "./PlannedActionPanel.css";
 import io from "socket.io-client";
 
 // Initialize Socket.IO connection
-const socket = io("http://localhost:5000");
+const socket = io("http://localhost:4000");
 
 // Key to store server start time
 const SERVER_START_TIME_KEY = "serverStartTime";
@@ -33,7 +33,7 @@ const PlannedActionPanel = () => {
    * Checks the server start time on mount to validate localStorage data.
    */
   useEffect(() => {
-    fetch("http://localhost:5000/server_start_time")
+    fetch("http://localhost:4000/server_start_time")
       .then((response) => response.json())
       .then((data) => {
         const serverStartTime = data.server_start_time;
