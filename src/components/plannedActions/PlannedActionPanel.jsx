@@ -5,115 +5,155 @@ import io from "socket.io-client";
 // Initialize Socket.IO connection
 const socket = io("http://localhost:4000");
 
-// Key to store server start time
-const SERVER_START_TIME_KEY = "serverStartTime";
+// Recursive helper to render a parameter key-value pair in a compact, nested style.
+const renderParameter = (key, value) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    "pvf_type" in value &&
+    "pvf_value" in value
+  ) {
+    // For parameters with the pvf structure, display only the pvf_value.
+    return (
+      <li key={key}>
+        <strong>{key}:</strong> {value.pvf_value}
+      </li>
+    );
+  } else if (value && typeof value === "object") {
+    // For nested objects, recursively render their keys.
+    return (
+      <li key={key}>
+        <strong>{key}:</strong>
+        <ul>
+          {Object.entries(value).map(([nestedKey, nestedValue]) =>
+            renderParameter(nestedKey, nestedValue)
+          )}
+        </ul>
+      </li>
+    );
+  } else {
+    return (
+      <li key={key}>
+        <strong>{key}:</strong> {value}
+      </li>
+    );
+  }
+};
+
+const renderParameters = (params) => (
+  <ul>
+    {Object.entries(params).map(([key, value]) => renderParameter(key, value))}
+  </ul>
+);
+
+// A component for a single action item.
+const ActionItem = ({ nodeData, status }) => {
+  const [showParams, setShowParams] = useState(false);
+
+  const toggleParams = () => {
+    setShowParams((prev) => !prev);
+  };
+
+  return (
+    <div className={`planned-action-item`}>
+
+      {/* Action Status */}
+      <div className={'status-action-item'}>{nodeData.subline}</div>
+
+      {/* Header: Name on the left, Status on the right */}
+      <div className="planned-action-item-header">
+        <div className="action-title">{nodeData.title}</div>
+      </div>
+
+      {/* Toggle to show/hide parameters */}
+      <div className="parameter-toggle" onClick={toggleParams}>
+        {showParams ? "Hide input parameters" : "Show input parameters"}
+      </div>
+
+      {showParams && (
+        <div className="parameters-container">
+          {nodeData.input_parameters
+            ? renderParameters(nodeData.input_parameters)
+            : <p>No input parameters</p>}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const PlannedActionPanel = () => {
-  // ----------------- State Management -----------------
+  const [actions, setActions] = useState([]);
+  const [actionStatus, setActionStatus] = useState("");
 
-  // State to track the planned action queue
-  const [queue, setQueue] = useState(() => {
-    const savedQueue = localStorage.getItem("plannedActionQueue");
-    try {
-      return savedQueue ? JSON.parse(savedQueue) : [];
-    } catch (e) {
-      console.error("Failed to parse saved queue:", e);
-      return [];
-    }
-  });
-
-  // State to track the current action status
-  const [actionStatus, setActionStatus] = useState(() =>
-    localStorage.getItem("actionStatus") || ""
-  );
-
-  // ----------------- useEffect Hooks -----------------
-
-  /**
-   * Checks the server start time on mount to validate localStorage data.
-   */
   useEffect(() => {
-    fetch("http://localhost:4000/server_start_time")
-      .then((response) => response.json())
-      .then((data) => {
-        const serverStartTime = data.server_start_time;
-        const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
+    console.log("[PlannedActionPanel] Component mounted. Connecting to socket events...");
 
-        if (storedServerStartTime !== serverStartTime) {
-          localStorage.clear();
-          localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
+    // Listen for the 'graphs' event from the backend.
+    socket.on("graphs", (data) => {
+      console.log("[PlannedActionPanel] Received 'graphs' event:", data);
+      if (data && Array.isArray(data) && data.length > 0) {
+        // For demo purposes, use the first graph in the list.
+        const selectedGraph = data[0];
+        console.log("[PlannedActionPanel] Selected graph:", selectedGraph);
 
-          // Reset state
-          setQueue([]);
-          setActionStatus("");
+        if (selectedGraph.actions) {
+          console.log("[PlannedActionPanel] Found actions:", selectedGraph.actions);
+          setActions(selectedGraph.actions);
+        } else {
+          console.warn("[PlannedActionPanel] No actions found in the selected graph:", selectedGraph);
+          setActions([]);
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching server start time:", error);
-      });
-  }, []);
-
-  /**
-   * Sets up Socket.IO listeners for backend updates.
-   * Listens for `queue_update` and `action_status` events.
-   */
-  useEffect(() => {
-    socket.on("queue_update", (data) => {
-      setQueue(data.queue || []);
+      } else {
+        console.warn("[PlannedActionPanel] Received 'graphs' event with no graphs:", data);
+        setActions([]);
+      }
     });
 
+    // Listen for the 'action_status' event.
     socket.on("action_status", (data) => {
-      setActionStatus(data.status || "");
+      console.log("[PlannedActionPanel] Received 'action_status' event:", data);
+      if (data && data.status) {
+        setActionStatus(data.status);
+      } else {
+        console.warn("[PlannedActionPanel] No status found in received data:", data);
+      }
     });
 
-    // Cleanup listeners on unmount
     return () => {
-      socket.off("queue_update");
+      console.log("[PlannedActionPanel] Cleaning up socket listeners...");
+      socket.off("graphs");
       socket.off("action_status");
     };
   }, []);
 
-  /**
-   * Saves the `queue` state to localStorage whenever it changes.
-   */
-  useEffect(() => {
-    localStorage.setItem("plannedActionQueue", JSON.stringify(queue));
-  }, [queue]);
-
-  /**
-   * Saves the `actionStatus` state to localStorage whenever it changes.
-   */
-  useEffect(() => {
-    localStorage.setItem("actionStatus", actionStatus);
-  }, [actionStatus]);
-
-  // -------------------- Render ------------------------
+  // Transform each action into a nodeData-like object.
+  const transformedActions = actions.map((action, index) => {
+    const nodeData = {
+      title: action.name,
+      subline: action.state,
+      instance_id: action.instance_id,
+      type: action.type,
+      input_parameters: action.input_parameters,
+      output_parameters: action.output_parameters,
+    };
+    return nodeData;
+  });
 
   return (
     <div className="planned-action-sub-panel">
-      <div className="sub-container">
-        {/* Render the queue or a "No actions planned" message */}
-        {queue.length === 0 ? (
-          <div className="queue-item">
+      <div className="planned-action-sub-container">
+        {transformedActions.length === 0 ? (
+          <div className="planned-action-item">
             <p>No actions planned</p>
           </div>
         ) : (
-          queue.map((action, index) => (
-            <div
-              key={index}
-              className={`queue-item ${
-                index === 0 && actionStatus ? `status-${actionStatus}` : ""
-              }`}
-            >
-              <h3>Action {index + 1}</h3>
-              <ul>
-                {Object.entries(action).map(([key, value]) => (
-                  <li key={key}>
-                    <strong>{key}:</strong> {value}
-                  </li>
-                ))}
-              </ul>
-            </div>
+          transformedActions.map((nodeData, index) => (
+            <ActionItem
+              key={nodeData.instance_id || index}
+              nodeData={nodeData}
+              // Only the first action gets the status badge
+              status={index === 0 ? actionStatus : null}
+            />
           ))
         )}
       </div>

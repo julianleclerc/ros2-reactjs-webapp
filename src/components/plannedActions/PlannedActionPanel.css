@@ -1,4 +1,6 @@
-/* ------------------------- Main Container ------------------------- */
+/* Remove or override any old .queue-item h3 { position: absolute; ... } */
+
+/* Container for the entire panel */
 .planned-action-sub-panel {
   background-color: #1a1a1a;
   display: flex;
@@ -7,9 +9,8 @@
   width: 100%;
 }
 
-/* ------------------------- Sub-Container ------------------------- */
-
-.sub-container {
+/* Sub-container for the list of actions */
+.planned-action-sub-container {
   background-color: #ddd;
   border-radius: 10px;
   padding: 20px;
@@ -21,10 +22,8 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* ------------------------- Queue Item ------------------------- */
-
-.queue-item {
-  position: relative; 
+/* Individual action container */
+.planned-action-item {
   background-color: #eee;
   border-radius: 5px;
   padding: 20px;
@@ -33,40 +32,52 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Action position in queue */
-.queue-item h3 {
-  position: absolute;
-  bottom: 5px; 
-  right: 10px; 
-  font-size: 0.8rem;
-  color: #000000;
-  margin: 0;
+/* Header: name on the left, status on the right (same line) */
+
+/* Larger text for the action name */
+.action-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 7px;
 }
 
-/* Ids and attributes */
-.queue-item ul {
-  list-style-type:disc;
-  padding-left: 10px;
-  margin: 0;
-  
+.status-action-item {
+  color: rgb(167, 167, 167);
+  text-align: right;
+  font-size: 12px;
 }
 
-.queue-item ul li {
+/* Show/hide parameters link */
+.parameter-toggle {
+  cursor: pointer;
+  color: rgb(179, 0, 0);
+  text-decoration: underline;
+  margin-bottom: 5px;
+}
+
+
+/* Nested list styling for parameters */
+.planned-action-item ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 5px 0;
+}
+
+.planned-action-item ul li {
+  margin: 2px 0;
   font-size: 1rem;
-  color: #000000;
-  line-height: 20px;
 }
 
-/* Placeholder for empty queue */
-.queue-item p {
+/* For empty queue messages */
+.planned-action-item p {
   color: #999;
   font-style: italic;
   text-align: center;
   margin: 0;
 }
 
-/* ------------------------- Status Styling ------------------------- */
-
+/* Status color highlights for the entire item box */
 .status-completed {
   background-color: #73e573 !important;
 }
@@ -82,4 +93,3 @@
 .status-handling {
   background-color: #73c1e5 !important;
 }
-

@@ -62,6 +62,7 @@ class RosInterface(Node):
         self.umrf_graph_stop_pub.publish(msg)
 
     def umrf_graph_feedback_cb(self, msg):
+        self.get_logger().info(f"[-----> DEBUG] msg.history: {msg.history}")
         self.graph_feedback_cb_parent(msg.actor, msg.history)
 
     ### Chat Interface Methods
