@@ -47,7 +47,7 @@ const renderParameters = (params) => (
 );
 
 // A component for a single action item.
-const ActionItem = ({ nodeData, status }) => {
+const ActionItem = ({nodeData}) => {
   const [showParams, setShowParams] = useState(false);
 
   const toggleParams = () => {
@@ -83,8 +83,7 @@ const ActionItem = ({ nodeData, status }) => {
 
 const PlannedActionPanel = () => {
   const [actions, setActions] = useState([]);
-  const [actionStatus, setActionStatus] = useState("");
-
+  
   useEffect(() => {
     console.log("[PlannedActionPanel] Component mounted. Connecting to socket events...");
 
@@ -106,16 +105,6 @@ const PlannedActionPanel = () => {
       } else {
         console.warn("[PlannedActionPanel] Received 'graphs' event with no graphs:", data);
         setActions([]);
-      }
-    });
-
-    // Listen for the 'action_status' event.
-    socket.on("action_status", (data) => {
-      console.log("[PlannedActionPanel] Received 'action_status' event:", data);
-      if (data && data.status) {
-        setActionStatus(data.status);
-      } else {
-        console.warn("[PlannedActionPanel] No status found in received data:", data);
       }
     });
 
@@ -151,8 +140,6 @@ const PlannedActionPanel = () => {
             <ActionItem
               key={nodeData.instance_id || index}
               nodeData={nodeData}
-              // Only the first action gets the status badge
-              status={index === 0 ? actionStatus : null}
             />
           ))
         )}

@@ -1,148 +1,163 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./ChatPanel.css";
 import io from "socket.io-client";
 
-// Socket.IO configuration: Connects the front end to the backend server at the specified address
+// Establish connection to the backend server.
 const socket = io("http://localhost:4000");
 
-// Key to store the server start time in localStorage
-// Used to ensure the session data remains valid between server restarts
-const SERVER_START_TIME_KEY = "serverStartTime";
-
 const ChatPanel = () => {
-  // ----------------- State Management -----------------
-
-  // State to manage the chat tabs
-  const [tabs, setTabs] = useState(() =>
-    loadFromStorage("chatTabs", [{ name: "Global", namespace: null }])
-  );
-
-  // State to track the currently active chat tab
-  const [activeTab, setActiveTab] = useState("Global");
-
-  // State to store chat messages for each tab
-  const [messages, setMessages] = useState(() =>
-    loadFromStorage("chatMessages", { Global: [] })
-  );
-
-  // State for the current message input
+  // The full chat log is maintained from the backend.
+  const [messages, setMessages] = useState({});
+  // Instead of a single active tab, we now use an array for multiple selections.
+  const [activeTabs, setActiveTabs] = useState([]);
   const [input, setInput] = useState("");
 
-  // Reference to the chat log DOM element for scrolling functionality
+  // Ref for auto-scrolling the chat log.
   const chatLogRef = useRef(null);
 
-  // ----------------- Helper Functions -----------------
 
-  /**
-   * Loads data from localStorage.
-   * @param {string} key - The key to retrieve from storage.
-   * @param {any} defaultValue - The default value to return if the key doesn't exist.
-   * @returns The stored data or the default value.
-   */
-  function loadFromStorage(key, defaultValue) {
-    const savedData = localStorage.getItem(key);
-    return savedData ? JSON.parse(savedData) : defaultValue;
-  }
+  // on page refresh
+  const refreshChatInterface = async () => {
+    try {
+      await fetch("http://localhost:4000/chat_interface_page_refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      console.log("Chat interface refreshed");
+    } catch (error) {
+      console.error("Error refreshing chat interface:", error);
+    }
+  };
 
-  /**
-   * Saves data to localStorage.
-   * @param {string} key - The key to store the data under.
-   * @param {any} value - The value to store.
-   */
-  function saveToStorage(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
+  useEffect(() => {
+    // Call refresh on mount.
+    refreshChatInterface();
+  
+    // Define a handler that calls refreshChatInterface.
+    const onPageShow = () => refreshChatInterface();
+  
+    // Listen for the 'pageshow' event (fires on load/reload)
+    window.addEventListener("pageshow", onPageShow);
+    // Listen for 'popstate' to capture back/forward navigation.
+    window.addEventListener("popstate", onPageShow);
+  
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("popstate", onPageShow);
+    };
+  }, []);
 
+  useEffect(() => {
+    socket.on("connect", () => {
+      refreshChatInterface();
+    });
+    // Cleanup: remove the listener when the component unmounts.
+    return () => {
+      socket.off("connect");
+    };
+  }, []);
+  
   /**
-   * Automatically scrolls the chat log to the bottom.
+   * Scrolls the chat log to the bottom.
    */
-  function autoScrollToBottom() {
+  const autoScrollToBottom = () => {
     if (chatLogRef.current) {
       chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
     }
-  }
+  };
 
   /**
-   * Updates messages in a specific tab.
-   * @param {string} tabName - The name of the tab to update.
-   * @param {object} newMessage - The new message to add.
+   * Listen for the "chat_log" event from the backend.
+   * When received, update the local messages state.
    */
-  function updateMessages(tabName, newMessage) {
-    setMessages((prevMessages) => ({
-      ...prevMessages,
-      [tabName]: [...(prevMessages[tabName] || []), newMessage],
-    }));
-  }
+  useEffect(() => {
+    socket.on("chat_log", (chatLog) => {
+      setMessages(chatLog);
+    });
+    return () => {
+      socket.off("chat_log");
+    };
+  }, []);
 
   /**
-   * Sends a message to the backend server.
-   * @param {object} request - The message request payload.
+   * Auto-scroll when messages or active tabs change.
    */
-  async function sendMessageToBackend(request) {
+  useEffect(() => {
+    autoScrollToBottom();
+  }, [messages, activeTabs]);
+
+  /**
+   * Sends a message to the backend.
+   * The message will be sent to all selected actors.
+   */
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    if (activeTabs.length === 0) {
+      alert("Please select at least one actor to send the message.");
+      return;
+    }
+    const request = {
+      actor: activeTabs, // Send to all selected actors
+      message: input.trim(),
+    };
+
+    setInput("");
+
     try {
       const response = await fetch("http://localhost:4000/send_message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
       });
+      if (!response.ok) {
+        console.error("Failed to send message");
+      }
+      // The backend will update and emit the updated chat_log.
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
 
-      if (!response.ok) throw new Error("Failed to send message");
-
+  /**
+   * Handles adding a new actor (tab).
+   * This sends a POST request to the backend's /add_new_actor endpoint.
+   */
+  const handleAddTab = async () => {
+    const actor = prompt("Enter the actor's name:");
+    if (!actor) return;
+    try {
+      const response = await fetch("http://localhost:4000/add_new_actor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actor_name: actor }),
+      });
       const data = await response.json();
-      
-      // Only update the chat with a "ROS" message if data.response exists
-      if (data.response) {
-        updateMessages(activeTab, {
-          user: "ROS",
-          message: data.response,
-          type: "default",
-        });
+      if (!response.ok) {
+        alert(data.error || "Error adding actor");
+        return;
+      }
+      // Optionally auto-select the new actor.
+      if (!activeTabs.includes(actor)) {
+        setActiveTabs([...activeTabs, actor]);
       }
     } catch (error) {
-      console.error("Error:", error.message);
-      updateMessages(activeTab, {
-        user: "System",
-        message: "Error: Unable to reach the backend server.",
-        type: "alert",
-      });
+      console.error("Error adding new actor:", error);
     }
-  }
-
-  // ----------------- Event Handlers -----------------
-
-  /**
-   * Handles sending a message from the user.
-   */
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    updateMessages(activeTab, { user: "You", message: input.trim(), type: "default" });
-
-    const namespace = tabs.find((tab) => tab.name === activeTab)?.namespace || null;
-    const request = { message: input.trim(), namespace };
-    setInput("");
-    await sendMessageToBackend(request);
   };
 
   /**
-   * Handles adding a new chat tab with a namespace.
+   * Toggles the selection of a tab (actor).
    */
-  const handleAddTab = () => {
-    const namespace = prompt("Enter the robot namespace:");
-    if (!namespace) return;
-
-    if (tabs.some((tab) => tab.name === namespace)) {
-      alert("A tab with this namespace already exists.");
-      return;
+  const handleToggleTab = (actor) => {
+    if (activeTabs.includes(actor)) {
+      setActiveTabs(activeTabs.filter((a) => a !== actor));
+    } else {
+      setActiveTabs([...activeTabs, actor]);
     }
-
-    setTabs((prevTabs) => [...prevTabs, { name: namespace, namespace }]);
-    setMessages((prevMessages) => ({ ...prevMessages, [namespace]: [] }));
   };
 
   /**
-   * Handles the Enter key for sending messages.
-   * @param {object} e - The keyboard event.
+   * Handles the Enter key press to send messages.
    */
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -156,99 +171,67 @@ const ChatPanel = () => {
    */
   const handleVoicePrompt = () => alert("Voice Prompt Activated! (🎙️)");
 
-  // ----------------- Socket Listener Setup -----------------
+  // Combine messages from all selected actors, remove duplicates, and sort them chronologically.
+  let combinedMessages = [];
+  if (activeTabs.length > 0) {
+    activeTabs.forEach((actor) => {
+      const actorMessages = messages[actor] || [];
+      combinedMessages = combinedMessages.concat(actorMessages);
+    });
+    // Remove duplicates by creating a unique key for each message.
+    const seen = new Set();
+    combinedMessages = combinedMessages.filter((msg) => {
+      const key = msg.join("|");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    // Sort by timestamp (assuming the first element is a valid timestamp).
+    combinedMessages.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  }
 
-  /**
-   * Sets up a listener for receiving messages from ROS via Socket.IO.
-   * @returns Cleanup function to remove the listener.
-   */
-  const setupSocketListener = useCallback(() => {
-    const handleRosMessage = (data) => {
-      updateMessages("Global", {
-        user: data.user,
-        message: data.message,
-        type: data.type || "default",
-      });
-    };
-
-    socket.on("ros_message", handleRosMessage);
-
-    // Cleanup function to remove the listener
-    return () => {
-      socket.off("ros_message", handleRosMessage);
-    };
-  }, []); // No dependencies because updateMessages is stable
-
-  // ----------------- useEffect Hooks -----------------
-
-  // Checks the server start time on mount to validate localStorage data
-  useEffect(() => {
-    fetch("http://localhost:4000/server_start_time")
-      .then((response) => response.json())
-      .then((data) => {
-        const serverStartTime = data.server_start_time;
-        const storedServerStartTime = localStorage.getItem(SERVER_START_TIME_KEY);
-
-        if (storedServerStartTime !== serverStartTime) {
-          localStorage.clear();
-          localStorage.setItem(SERVER_START_TIME_KEY, serverStartTime);
-
-          // Reset state
-          setTabs([{ name: "Global", namespace: null }]);
-          setMessages({ Global: [] });
-          setActiveTab("Global");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching server start time:", error);
-      });
-  }, []);
-
-  // Saves tabs and messages to localStorage whenever they change
-  useEffect(() => saveToStorage("chatTabs", tabs), [tabs]);
-  useEffect(() => saveToStorage("chatMessages", messages), [messages]);
-
-  // Sets up the Socket.IO listener
-  useEffect(() => {
-    const cleanup = setupSocketListener();
-    return cleanup;
-  }, [setupSocketListener]);
-
-  // Automatically scrolls to the bottom of the chat log when messages or activeTab change
-  useEffect(() => {
-    autoScrollToBottom();
-  }, [messages, activeTab]);
-
-  // -------------------- Render ------------------------
+  
 
   return (
     <div className="chat-sub-panel">
       <div className="chat-container">
+        {/* Tab Section */}
         <div className="tab-container">
           <button className="add-tab-button" onClick={handleAddTab}>
             +
           </button>
           <div className="tabs-scrollable">
-            {tabs.map((tab) => (
+            {Object.keys(messages).map((actor) => (
               <button
-                key={tab.name}
-                className={`tab-button ${activeTab === tab.name ? "active-tab" : ""}`}
-                onClick={() => setActiveTab(tab.name)}
+                key={actor}
+                className={`tab-button ${activeTabs.includes(actor) ? "active-tab" : ""}`}
+                onClick={() => handleToggleTab(actor)}
               >
-                {tab.name}
+                {actor}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Chat Log */}
         <div className="chat-log" ref={chatLogRef}>
-          {(messages[activeTab] || []).map((chat, idx) => (
-            <p key={idx} className={`chat-message ${chat.type || ""}`}>
-              <strong>{chat.user}:</strong> {chat.message}
-            </p>
-          ))}
+          {activeTabs.length > 0 ? (
+            combinedMessages.map((chat, idx) => {
+              // Each chat entry is in the form [timestamp, user, message].
+              const [timestamp, user, message] = chat;
+              return (
+                <p key={idx} className="chat-message">
+                  <span className="chat-timestamp">{timestamp}</span>{" "}
+                  <strong>{user}:</strong> {message}
+                </p>
+              );
+            })
+          ) : (
+            <p>No actor selected. Please select at least one actor.</p>
+          )}
         </div>
 
+        {/* Input Section */}
         <div className="chat-input-container">
           <input
             type="text"

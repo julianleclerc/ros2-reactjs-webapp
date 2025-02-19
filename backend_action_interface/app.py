@@ -80,21 +80,101 @@ def graph_feedback_callback(actor, graphs_in):
 
 ### CHAT INTERFACE I/O
 
+chat_log = {}
+
+def get_current_timestamp():
+    """Return current UTC time in ISO format."""
+    return datetime.datetime.utcnow().isoformat() + "Z"
+
+
 @app.route('/send_message', methods=['POST'])
 def http_send_message():
     data = request.get_json()
+
+    actor_list = data.get("actor")
+    current_time = get_current_timestamp()
+    user = "user"
     message = data.get("message")
+
+    # Append the incoming message to each actor's log.
+    for actor in actor_list:
+        if actor not in chat_log:
+            chat_log[actor] = []  # Initialize if not already present.
+        chat_log[actor].append([current_time, user, message])
+
+    # Check if ri_node is available and the message is not empty.
     if ri_node and message:
-        ri_node.send_chat_message(message)
-        return jsonify({"debug": "Message sent"}), 200
-    else:
-        return jsonify({"error": "Unable to send message"}), 400
+        ros_message = json.dumps({"targets": actor_list, "message": message})
+        ri_node.send_chat_message(ros_message)
+
+        # Log a feedback message.
+        current_time = get_current_timestamp()
+        feedback_user = "debug"
+        feedback_message = "Message sent"
+        for actor in actor_list:
+            chat_log[actor].append([current_time, feedback_user, feedback_message])
         
+        socketio.emit('chat_log', chat_log)
+        return jsonify({"debug": "Message sent"}), 200
+
+    else:
+        # Log an error message if sending failed.
+        current_time = get_current_timestamp()
+        error_user = "error"
+        error_message = "Unable to send message"
+        for actor in actor_list:
+            chat_log[actor].append([current_time, error_user, error_message])
+
+        socketio.emit('chat_log', chat_log)
+        return jsonify({"error": "Unable to send message"}), 400
 
 def chat_feedback_callback(message):
+    """
+    Callback function to handle chat messages from ROS.
+    It parses the message, updates the chat_log, and emits the full log.
+    """
     print(f"[DEBUG] In chat_feedback_callback with message: {message}")
-    socketio.emit('ros_message', {"user": "TeMoto", "message": message})
-    print("[DEBUG] Emitted ros_message event")
+    data = json.loads(message)
+
+    actor_list = data.get("targets")
+    current_time = get_current_timestamp()
+    msg = data.get("message")
+    for actor in actor_list:
+        # Use the actor's identifier as the user.
+        user = str(actor)
+        if actor not in chat_log:
+            chat_log[actor] = []
+        chat_log[actor].append([current_time, user, msg])
+
+    socketio.emit('chat_log', chat_log)
+    print("[DEBUG] Emitted chat_log event")
+
+@app.route('/add_new_actor', methods=['POST'])
+def add_new_actor_to_log():
+    data = request.get_json()
+    actor_name = data.get("actor_name")
+
+    if not actor_name:
+        return jsonify({"error": "Missing actor_name"}), 400
+
+    if actor_name in chat_log:
+        return jsonify({"error": "Actor already exists"}), 400
+
+    chat_log[actor_name] = []
+    
+    # Log a feedback message.
+    current_time = get_current_timestamp()
+    feedback_user = "debug"
+    feedback_message = f"{actor_name} initialised"
+    chat_log[actor_name].append([current_time, feedback_user, feedback_message])
+
+    socketio.emit('chat_log', chat_log)
+    return jsonify({"message": f"Actor {actor_name} added to chat log."}), 200
+
+@app.route('/chat_interface_page_refresh', methods=['POST'])
+def chat_interface_page_refresh():
+    socketio.emit('chat_log', chat_log)
+    return jsonify({"message": "Chat interface refreshed", "chat_log": chat_log}), 200
 
 ### Server start time to save storage
 
