@@ -2,145 +2,171 @@ import React, { useEffect, useState } from "react";
 import "./PlannedActionPanel.css";
 import io from "socket.io-client";
 
-// Initialize Socket.IO connection
+// Initialize the Socket.IO connection.
+// This instance persists across component re-mounts.
 const socket = io("http://localhost:4000");
 
-// Recursive helper to render a parameter key-value pair in a compact, nested style.
-const renderParameter = (key, value) => {
-  if (
-    value &&
-    typeof value === "object" &&
-    "pvf_type" in value &&
-    "pvf_value" in value
-  ) {
-    // For parameters with the pvf structure, display only the pvf_value.
-    return (
-      <li key={key}>
-        <strong>{key}:</strong> {value.pvf_value}
-      </li>
-    );
-  } else if (value && typeof value === "object") {
-    // For nested objects, recursively render their keys.
-    return (
-      <li key={key}>
-        <strong>{key}:</strong>
-        <ul>
-          {Object.entries(value).map(([nestedKey, nestedValue]) =>
-            renderParameter(nestedKey, nestedValue)
-          )}
-        </ul>
-      </li>
-    );
-  } else {
-    return (
-      <li key={key}>
-        <strong>{key}:</strong> {value}
-      </li>
-    );
-  }
-};
-
-const renderParameters = (params) => (
-  <ul>
-    {Object.entries(params).map(([key, value]) => renderParameter(key, value))}
-  </ul>
-);
-
-// A component for a single action item.
-const ActionItem = ({nodeData}) => {
+/**
+ * ActionItem component displays a single action.
+ * It shows the action's title, state, and toggles input parameters display.
+ *
+ * @param {object} nodeData - Contains details for the action.
+ */
+const ActionItem = ({ nodeData }) => {
   const [showParams, setShowParams] = useState(false);
 
+  // Toggle the display of input parameters.
   const toggleParams = () => {
     setShowParams((prev) => !prev);
   };
 
   return (
-    <div className={`planned-action-item`}>
+    <div className="planned-action-item">
+      {/* Display the action's state/subline */}
+      <div className="status-action-item">{nodeData.subline}</div>
 
-      {/* Action Status */}
-      <div className={'status-action-item'}>{nodeData.subline}</div>
-
-      {/* Header: Name on the left, Status on the right */}
+      {/* Action header displaying the title */}
       <div className="planned-action-item-header">
         <div className="action-title">{nodeData.title}</div>
       </div>
 
-      {/* Toggle to show/hide parameters */}
+      {/* Toggle for showing/hiding input parameters */}
       <div className="parameter-toggle" onClick={toggleParams}>
         {showParams ? "Hide input parameters" : "Show input parameters"}
       </div>
 
+      {/* Conditionally render the parameters */}
       {showParams && (
         <div className="parameters-container">
-          {nodeData.input_parameters
-            ? renderParameters(nodeData.input_parameters)
-            : <p>No input parameters</p>}
+          {nodeData.input_parameters ? (
+            <ul>
+              {Object.entries(nodeData.input_parameters).map(([key, value]) => (
+                <li key={key}>
+                  <strong>{key}:</strong>{" "}
+                  {typeof value === "object" ? JSON.stringify(value) : value}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No input parameters</p>
+          )}
         </div>
       )}
     </div>
   );
 };
 
+/**
+ * PlannedActionPanel component listens for the "umrf_feedback_data" socket event,
+ * extracts actions from each actor’s graph, and displays them.
+ * It includes a drop-down menu to filter actions by actor, defaulting to "None".
+ */
 const PlannedActionPanel = () => {
+  // State to hold all collected actions.
   const [actions, setActions] = useState([]);
-  
+  // State to hold the currently selected actor filter (default is "None")
+  const [selectedActor, setSelectedActor] = useState("None");
+
   useEffect(() => {
-    console.log("[PlannedActionPanel] Component mounted. Connecting to socket events...");
+    console.log(
+      "[PlannedActionPanel] Component mounted. Listening for 'umrf_feedback_data'..."
+    );
 
-    // Listen for the 'graphs' event from the backend.
-    socket.on("graphs", (data) => {
-      console.log("[PlannedActionPanel] Received 'graphs' event:", data);
-      if (data && Array.isArray(data) && data.length > 0) {
-        // For demo purposes, use the first graph in the list.
-        const selectedGraph = data[0];
-        console.log("[PlannedActionPanel] Selected graph:", selectedGraph);
+    // Listen for the 'umrf_feedback_data' event from the backend.
+    socket.on("umrf_feedback_data", (data) => {
+      console.log("[PlannedActionPanel] Received 'umrf_feedback_data':", data);
+      let collectedActions = [];
 
-        if (selectedGraph.actions) {
-          console.log("[PlannedActionPanel] Found actions:", selectedGraph.actions);
-          setActions(selectedGraph.actions);
-        } else {
-          console.warn("[PlannedActionPanel] No actions found in the selected graph:", selectedGraph);
-          setActions([]);
+      // Loop over each actor's graph.
+      for (const actor in data) {
+        let graphData = data[actor];
+
+        // If graphData is an array, take the last (latest) element.
+        if (Array.isArray(graphData)) {
+          graphData = graphData[graphData.length - 1];
         }
-      } else {
-        console.warn("[PlannedActionPanel] Received 'graphs' event with no graphs:", data);
-        setActions([]);
+
+        let parsedGraph;
+        try {
+          // If the graph is a string, parse it as JSON.
+          parsedGraph =
+            typeof graphData === "string" ? JSON.parse(graphData) : graphData;
+        } catch (err) {
+          console.error(`Error parsing graph for actor ${actor}:`, err);
+          continue;
+        }
+
+        // If the parsed graph contains an "actions" array, process it.
+        if (parsedGraph && Array.isArray(parsedGraph.actions)) {
+          // Add the actor info to each action.
+          const actionsWithActor = parsedGraph.actions.map((action) => ({
+            ...action,
+            actor, // tag action with actor name
+          }));
+          collectedActions = collectedActions.concat(actionsWithActor);
+        }
       }
+
+      // Update the state with all collected actions.
+      setActions(collectedActions);
     });
 
+    // Cleanup the socket listener when the component unmounts.
     return () => {
       console.log("[PlannedActionPanel] Cleaning up socket listeners...");
-      socket.off("graphs");
-      socket.off("action_status");
+      socket.off("umrf_feedback_data");
     };
   }, []);
 
-  // Transform each action into a nodeData-like object.
-  const transformedActions = actions.map((action, index) => {
-    const nodeData = {
-      title: action.name,
-      subline: action.state,
-      instance_id: action.instance_id,
-      type: action.type,
-      input_parameters: action.input_parameters,
-      output_parameters: action.output_parameters,
-    };
-    return nodeData;
-  });
+  // Compute a list of unique actors from the actions.
+  const uniqueActors = Array.from(new Set(actions.map((action) => action.actor)));
+
+  // Transform each action into the structure expected by ActionItem.
+  const transformedActions = actions.map((action, index) => ({
+    title: action.name || `Action ${index + 1}`,
+    subline: action.state || "",
+    instance_id: action.instance_id || index,
+    type: action.type || "",
+    input_parameters: action.input_parameters || {},
+    output_parameters: action.output_parameters || {},
+    actor: action.actor || "Unknown",
+  }));
+
+  // Filter actions based on the selected actor.
+  // If "None" is selected, no actions are displayed.
+  const filteredActions =
+    selectedActor === "None"
+      ? []
+      : transformedActions.filter((action) => action.actor === selectedActor);
 
   return (
     <div className="planned-action-sub-panel">
+      {/* Drop-down filter */}
+      <div className="actor-filter">
+        <label htmlFor="actor-select">Select Actor : </label>
+        <select
+          id="actor-select"
+          value={selectedActor}
+          onChange={(e) => setSelectedActor(e.target.value)}
+        >
+          <option value="None">None</option>
+          {uniqueActors.map((actor) => (
+            <option key={actor} value={actor}>
+              {actor}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Actions list */}
       <div className="planned-action-sub-container">
-        {transformedActions.length === 0 ? (
+        {filteredActions.length === 0 ? (
           <div className="planned-action-item">
             <p>No actions planned</p>
           </div>
         ) : (
-          transformedActions.map((nodeData, index) => (
-            <ActionItem
-              key={nodeData.instance_id || index}
-              nodeData={nodeData}
-            />
+          filteredActions.map((nodeData, index) => (
+            <ActionItem key={nodeData.instance_id || index} nodeData={nodeData} />
           ))
         )}
       </div>

@@ -27,12 +27,10 @@
   background-color: #eee;
   border-radius: 5px;
   padding: 20px;
-  padding-bottom: 30px; 
+  padding-bottom: 30px;
   color: black;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
-/* Header: name on the left, status on the right (same line) */
 
 /* Larger text for the action name */
 .action-title {
@@ -55,7 +53,6 @@
   text-decoration: underline;
   margin-bottom: 5px;
 }
-
 
 /* Nested list styling for parameters */
 .planned-action-item ul {
@@ -92,4 +89,35 @@
 
 .status-handling {
   background-color: #73c1e5 !important;
+}
+
+/* Styling for the actor filter dropdown */
+.actor-filter {
+  display: flex;
+  align-items: center;
+  padding: 9px;
+  font-size: 1rem;
+  background-color: #272727; 
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin-bottom: 15px;
+}
+
+.actor-filter label {
+  margin-right: 20px;
+  margin-left: 20px;
+  color: white;
+  white-space: nowrap; /* Prevent label text from wrapping */
+}
+
+.actor-filter select {
+  flex: 1;                  /* Take up remaining space */
+  padding: 5px;
+  font-size: 1rem;
+  border-radius: 3px;
+  border: none;
+  box-sizing: border-box;
+  margin-right: 20px;
+  background-color: #eee;
+
 }
