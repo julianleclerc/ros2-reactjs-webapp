@@ -21,6 +21,8 @@ const ActionInterfacePage = () => {
             return;
         }
 
+        setSelectedAction(null);
+        
         // Make the NodeEditorPanel spit out currently active graph,
         // which gets saved in the handleGetCurrentGraph
         if (nodeEditorRef.current) {
