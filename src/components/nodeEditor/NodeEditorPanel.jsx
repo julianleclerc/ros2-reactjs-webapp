@@ -22,7 +22,7 @@ const nodeTypes = {
   turbo: SpinNode,
 };
 
-const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
+const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect }, ref) => {
 
   const [activeGraph, setActiveGraph] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState();
@@ -42,6 +42,8 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
 
     const new_nodes: Node<SpinNodeData>[] = graphJson.actions?.map((action) => {
 
+      console.log("Json to Flow action: ", action);
+      //console.log("Action input parameters: ", action.input_parameters);
       let nodeData = {
         title: action.name,
         subline: action.state && action.state !== 'UNINITIALIZED' ? action.state : '',
@@ -84,8 +86,8 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
   }, [setActiveGraph, setNodes, setEdges]);
 
   const flowToJson = useCallback(() => {
-
     console.log("flowToJson: ", activeGraph.graph_name)
+    console.log("Active Graph: ", activeGraph);
 
     let activeGraphUpdated = {
         graph_name: activeGraph.graph_name,
@@ -108,7 +110,9 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
                 type: node.data.type,
                 parents: [],
                 children: [],
-                gui_attributes: {position: node.position}
+                gui_attributes: {position: node.position},
+                input_parameters: node.data.input_parameters,
+                output_parameters: node.data.output_parameters
             };
 
             if (node.data.state){
@@ -151,6 +155,10 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
     [setEdges],
   );
 
+  const handleActionClick = (action) => {
+    onActionSelect(action);
+  };
+
   return (
       <ReactFlow
         nodes={nodes}
@@ -163,15 +171,16 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph }, ref) => {
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB"}}
+        onNodeClick={(event, node) => handleActionClick(node.data)}
         >
           <Background />
       </ReactFlow>
   );
 });
 
-export default forwardRef(({graphDataIn, onUpdateGraph}, ref) => (
+export default forwardRef(({graphDataIn, onUpdateGraph, onActionSelect}, ref) => (
   <ReactFlowProvider>
-    <NodeEditorPanel ref={ref} graphDataIn={graphDataIn} onUpdateGraph={onUpdateGraph} />
+    <NodeEditorPanel ref={ref} graphDataIn={graphDataIn} onUpdateGraph={onUpdateGraph} onActionSelect={onActionSelect} />
   </ReactFlowProvider>
 ));
 

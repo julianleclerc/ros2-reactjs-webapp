@@ -9,6 +9,7 @@ const ActionInterfacePage = () => {
 
     const [graphs, setGraphs] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null);
+    const [selectedAction, setSelectedAction] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
 
@@ -83,6 +84,10 @@ const ActionInterfacePage = () => {
         }
     };
 
+    const handleActionSelect = (action) => {
+        setSelectedAction(action);
+    };
+
     useEffect(() => {
         const socket = io('http://localhost:4000');
 
@@ -120,11 +125,14 @@ const ActionInterfacePage = () => {
                 <NodeEditorPanel
                     ref={nodeEditorRef}
                     graphDataIn={selectedGraph}
-                    onUpdateGraph={handleGetCurrentGraph}/>
+                    onUpdateGraph={handleGetCurrentGraph}
+                    onActionSelect={handleActionSelect}/>
             </div>
-
             <div className="graph-info-panel">
-                <GraphInfoPanel graphDataIn={selectedGraph} />
+                <GraphInfoPanel
+                    graphDataIn={selectedGraph}
+                    actionDataIn={selectedAction}
+                />
             </div>
         </div>
     );
