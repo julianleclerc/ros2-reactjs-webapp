@@ -17,6 +17,7 @@ import SpinNode, { type SpinNodeData } from './SpinNode.tsx';
 import '@xyflow/react/dist/base.css';
 // import "./NodeEditorPanel.css";
 import "./SpinNode.css";
+import "./SelectedNode.css";
 
 const nodeTypes = {
   turbo: SpinNode,
@@ -28,6 +29,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
   const [nodes, setNodes, onNodesChange] = useNodesState();
   const [edges, setEdges, onEdgesChange] = useEdgesState();
   const [rfInstance, setRfInstance] = useState(null);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
   // const { setViewport } = useReactFlow();
 
   useImperativeHandle(ref, () => ({
@@ -155,7 +157,8 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
     [setEdges],
   );
 
-  const handleActionClick = (action) => {
+  const handleActionClick = (action, node) => {
+    setSelectedNodeId(node.id);
     onActionSelect(action);
   };
 
@@ -171,7 +174,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB"}}
-        onNodeClick={(event, node) => handleActionClick(node.data)}
+        onNodeClick={(event, node) => handleActionClick(node.data, node)}
         >
           <Background />
       </ReactFlow>
