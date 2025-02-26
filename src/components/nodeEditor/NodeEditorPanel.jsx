@@ -45,6 +45,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
     const new_nodes: Node<SpinNodeData>[] = graphJson.actions?.map((action) => {
 
       console.log("Json to Flow action: ", action);
+      console.log("Action actor: ", action);
       //console.log("Action input parameters: ", action.input_parameters);
       let nodeData = {
         title: action.name,
@@ -53,6 +54,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
         type: action.type,
         input_parameters: action.input_parameters,
         output_parameters: action.output_parameters,
+        actor: action.actor,
       };
 
       // Conditionally add state field
@@ -89,7 +91,6 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
 
   const flowToJson = useCallback(() => {
     console.log("flowToJson: ", activeGraph.graph_name)
-    console.log("Active Graph: ", activeGraph);
 
     let activeGraphUpdated = {
         graph_name: activeGraph.graph_name,
@@ -114,7 +115,8 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
                 children: [],
                 gui_attributes: {position: node.position},
                 input_parameters: node.data.input_parameters,
-                output_parameters: node.data.output_parameters
+                output_parameters: node.data.output_parameters,
+                actor: node.data.actor
             };
 
             if (node.data.state){
