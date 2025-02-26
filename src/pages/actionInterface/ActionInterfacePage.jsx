@@ -15,13 +15,14 @@ const ActionInterfacePage = () => {
 
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
-
-        // Ignore clicks on the same active graph name
+        
+        // Always reset selected action regardless of which graph is clicked
+        setSelectedAction(null);
+        
+        // Only fetch the graph data if it's a different graph
         if (selectedGraph && selectedGraph.graph_name === graphName) {
             return;
         }
-
-        setSelectedAction(null);
         
         // Make the NodeEditorPanel spit out currently active graph,
         // which gets saved in the handleGetCurrentGraph
@@ -37,7 +38,7 @@ const ActionInterfacePage = () => {
             }
 
             const result = await response.json();
-            setSelectedGraph( result );
+            setSelectedGraph(result);
 
         } catch (error) {
             console.error('Error fetching data', error);

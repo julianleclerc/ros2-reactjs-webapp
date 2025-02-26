@@ -3,15 +3,16 @@ import './GraphInfoPanel.css';
 
 const GraphInfoPanel = ({ graphDataIn, actionDataIn }) => {
   if (!graphDataIn) {
-    return <div>No graph selected</div>;
+    return <div className="graph-info-container">
+      <h2>No Graph Selected</h2>
+      <pre>Select a graph from the list to view details</pre>
+    </div>;
   }
-
-  console.log("Graph Data In: ", graphDataIn);
-  console.log("Action Data In: ", actionDataIn);
 
   return (
     <div className="graph-info-container">
-      {!actionDataIn ? (
+      <h2>{actionDataIn === null ? 'Graph Details' : 'Action Details'}</h2>
+      {actionDataIn === null ? (
         <pre>{JSON.stringify(graphDataIn, null, 2)}</pre>
       ) : (
         <pre>{JSON.stringify(actionDataIn, null, 2)}</pre>
