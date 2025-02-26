@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import GraphListPanel from "../../components/graphList/GraphListPanel.jsx";
 import NodeEditorPanel from "../../components/nodeEditor/NodeEditorPanel.jsx";
+import GraphInfoPanel from "../../components/graphInfo/GraphInfoPanel.jsx";
 import "./ActionInterfacePage.css";
 
 const ActionInterfacePage = () => {
@@ -120,6 +121,10 @@ const ActionInterfacePage = () => {
                     ref={nodeEditorRef}
                     graphDataIn={selectedGraph}
                     onUpdateGraph={handleGetCurrentGraph}/>
+            </div>
+
+            <div className="graph-info-panel">
+                <GraphInfoPanel graphDataIn={selectedGraph} />
             </div>
         </div>
     );
