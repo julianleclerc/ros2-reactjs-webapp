@@ -27,3 +27,14 @@
     width: 900px;
     box-sizing: border-box;
 }
+
+/* ------------------------- Graph Info Panel ------------------------- */
+
+.action-interface-page .graph-info-panel {
+    flex: 1;
+    margin: 0 10px;
+    width: 480px;
+    max-width: 380px;
+    box-sizing: border-box;
+    background-color: transparent;
+}
