@@ -19,6 +19,16 @@
     box-sizing: border-box;
 }
 
+/* ------------------------- Planned Action Panel ------------------------- */
+
+.action-interface-page .action-list-panel {
+    flex: 1;
+    margin: 0 10px; /* Horizontal padding between panels */
+    width: 480px;
+    max-width: 380px; /* Limit the maximum width */
+    box-sizing: border-box;
+}
+
 /* ------------------------- Node Editor Panel ------------------------- */
 
 .action-interface-page .node-editor-panel {
