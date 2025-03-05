@@ -19,6 +19,8 @@ import '@xyflow/react/dist/base.css';
 import "./SpinNode.css";
 import "./SelectedNode.css";
 
+import { useDnD } from "../../components/actionList/DnDContext.jsx";
+
 const nodeTypes = {
   turbo: SpinNode,
 };
@@ -31,6 +33,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
   const [rfInstance, setRfInstance] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   // const { setViewport } = useReactFlow();
+  const [type] = useDnD();
 
   useImperativeHandle(ref, () => ({
     getCurrentGraph() {
@@ -163,6 +166,41 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
     setSelectedNodeId(node.id);
     onActionSelect(action);
   };
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      console.log('Drop event triggered');
+
+      const dragType = type || 'turbo';
+
+      console.log('Type at drop:', dragType);
+      if (!dragType) return;
+
+      const actionName = event.dataTransfer.getData('actionName');
+      console.log('Action Name at drop:', actionName);
+      if (!actionName) return;
+
+      const position = { x: event.clientX, y: event.clientY };    // TODO: need to fix this
+      console.log('Position:', position);
+
+      const newNode = {
+        id: `node_${Date.now()}`,
+        type: dragType,
+        position,
+        data: { title: actionName, label: `${dragType} node` },
+      };
+      console.log('New Node:', newNode);
+
+      // Ensure 'nds' is an array before spreading
+      setNodes((nds) => Array.isArray(nds) ? [...nds, newNode] : [newNode]);
+    },
+    [type, setNodes]
+  );
 
   return (
       <ReactFlow
@@ -173,6 +211,8 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
         onConnect={onConnect}
         onInit={setRfInstance}
         nodeTypes={nodeTypes}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB"}}

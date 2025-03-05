@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import GraphListPanel from "../../components/graphList/GraphListPanel.jsx";
+import ActionListPanel from "../../components/actionList/ActionListPanel.jsx";
 import NodeEditorPanel from "../../components/nodeEditor/NodeEditorPanel.jsx";
 import GraphInfoPanel from "../../components/graphInfo/GraphInfoPanel.jsx";
 import "./ActionInterfacePage.css";
@@ -12,6 +13,8 @@ const ActionInterfacePage = () => {
     const [selectedAction, setSelectedAction] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
+
+    const [actions, setActions] = useState(null);
 
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
@@ -87,8 +90,18 @@ const ActionInterfacePage = () => {
         }
     };
 
-    const handleActionSelect = (action) => {
+    // Kaarel previous. 
+    const handleActionSelectKaarel = (action) => {
         setSelectedAction(action);
+    };
+
+    const handleActionSelect = async (actionName) => {
+        console.log('clicked action!', actionName);
+
+        // Ignore clicks on the same active action name
+        if (selectedAction && selectedAction.action_name === actionName) {
+            return;
+        }
     };
 
     useEffect(() => {
@@ -116,12 +129,24 @@ const ActionInterfacePage = () => {
 
     return (
         <div className="action-interface-page">
-            <div className="graph-list-panel">
-                <GraphListPanel
-                    graphsIn={graphs}
-                    onGraphSelect={handleGraphSelect}
-                    onStartStopClick={handleStartStopClick}
-                    runtimeEnabled={runtimeEnabled}/>
+            <div className="graph-action-list-panel-div">
+                <div className="graph-list-panel">
+                    <GraphListPanel
+                        graphsIn={graphs}
+                        onGraphSelect={handleGraphSelect}
+                        onStartStopClick={handleStartStopClick}
+                        runtimeEnabled={runtimeEnabled}/>
+                </div>
+
+                <div className="action-list-panel">
+                    <ActionListPanel
+                        // actionsIn={actions}      // TODO: Get actions from backend / workspace
+                        actionsIn={[
+                        { id: 'action-1', action_name: 'Action 1' },  // For testing.
+                        { id: 'action-2', action_name: 'Action 2' }
+                        ]}
+                        onActionSelect={handleActionSelect}/>
+                </div>
             </div>
 
             <div className="node-editor-panel">
