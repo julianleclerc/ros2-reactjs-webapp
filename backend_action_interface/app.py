@@ -13,6 +13,7 @@ socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
 runtime_enabled = False
 graphs = {}
+actions = {}
 ri_node = None # TODO: ideally the ros node should not be exposed like that
 
 @app.route('/api/graphs/<key>', methods=['GET'])
@@ -99,7 +100,11 @@ if __name__ == '__main__':
         ri.wait_until_initialized()
         ri_node = ri.node
 
-        graphs_indexed, graphs_running = ri.get_graphs()
+        actions, graphs_indexed, graphs_running = ri.get_graphs()
+
+        for a in actions:
+            a_json = json.loads(a)
+            actions[a_json["name"]] = a_json
 
         for g in graphs_indexed:
             g_json = json.loads(g)
