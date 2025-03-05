@@ -10,7 +10,7 @@ const ActionInterfacePage = () => {
 
     const [graphs, setGraphs] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null);
-    const [selectedAction, setSelectedAction] = useState(null);
+    const [selectedNode, setSelectedNode] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
 
@@ -20,7 +20,7 @@ const ActionInterfacePage = () => {
         console.log('clicked graph!', graphName);
         
         // Always reset selected action regardless of which graph is clicked
-        setSelectedAction(null);
+        setSelectedNode(null);
         
         // Only fetch the graph data if it's a different graph
         if (selectedGraph && selectedGraph.graph_name === graphName) {
@@ -91,15 +91,15 @@ const ActionInterfacePage = () => {
     };
 
     // Kaarel previous. 
-    const handleActionSelectKaarel = (action) => {
-        setSelectedAction(action);
+    const handleNodeSelect = (action) => {
+        setSelectedNode(action);
     };
 
     const handleActionSelect = async (actionName) => {
         console.log('clicked action!', actionName);
 
         // Ignore clicks on the same active action name
-        if (selectedAction && selectedAction.action_name === actionName) {
+        if (selectedNode && selectedNode.action_name === actionName) {
             return;
         }
     };
@@ -154,12 +154,12 @@ const ActionInterfacePage = () => {
                     ref={nodeEditorRef}
                     graphDataIn={selectedGraph}
                     onUpdateGraph={handleGetCurrentGraph}
-                    onActionSelect={handleActionSelect}/>
+                    onActionSelect={handleNodeSelect}/>
             </div>
             <div className="graph-info-panel">
                 <GraphInfoPanel
                     graphDataIn={selectedGraph}
-                    actionDataIn={selectedAction}
+                    actionDataIn={selectedNode}
                 />
             </div>
         </div>
