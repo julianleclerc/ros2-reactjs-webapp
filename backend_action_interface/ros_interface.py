@@ -40,7 +40,7 @@ class RosInterface(Node):
 
 		req = UmrfGraphGet.Request()
 		res = self.client_graph_get.call(req)
-		return res.graph_jsons_indexed, res.graph_jsons_running
+		return res.umrf_jsons, res.graph_jsons_indexed, res.graph_jsons_running
 
 	def start_graph(self, graph_name):
 
