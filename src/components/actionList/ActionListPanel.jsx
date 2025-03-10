@@ -15,14 +15,14 @@ const ActionListPanel = ({ actionsIn, onActionSelect }) => {
 
     const handleActionSelectClick = (action) => {
         setActiveAction(action);
-        onActionSelect(action.action_name);
+        onActionSelect(action.name);
     };
 
     const onDragStart = (event, nodeType, actionName) => {
         setType(nodeType);
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('actionName', actionName);
-        console.log('Dragging:', nodeType);
+        console.log('Dragging:', nodeType, ", with action name: ", actionName);
     };
 
     return (

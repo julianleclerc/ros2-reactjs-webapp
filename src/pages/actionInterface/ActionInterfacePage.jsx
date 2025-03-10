@@ -14,6 +14,7 @@ const ActionInterfacePage = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
+    const [activeGraph, setActiveGraph] = useState(null);
 
     console.log("graphs: ", graphs);
     console.log("actions: ", actions);
@@ -92,7 +93,7 @@ const ActionInterfacePage = () => {
         }
     };
 
-    // Kaarel previous. 
+    // Kaarel' previous. should be merged with handleActionSelect 
     const handleNodeSelect = (action) => {
         setSelectedNode(action);
     };
@@ -104,6 +105,19 @@ const ActionInterfacePage = () => {
         if (selectedNode && selectedNode.action_name === actionName) {
             return;
         }
+    };
+
+    const handleNewGraph = () => {
+        console.log("handleCreateNewGraph");
+        const newGraph = {
+            graph_name: `NewGraph_${Date.now()}`,
+            graph_description: "Newly created graph",
+            actions: []
+        };
+        setGraphs([...graphs, newGraph]);
+        setActiveGraph(newGraph);
+        handleGraphSelect(newGraph.graph_name);
+        console.log("new graph added, graphs: ", graphs);
     };
 
     useEffect(() => {
@@ -143,12 +157,14 @@ const ActionInterfacePage = () => {
                         graphsIn={graphs}
                         onGraphSelect={handleGraphSelect}
                         onStartStopClick={handleStartStopClick}
-                        runtimeEnabled={runtimeEnabled}/>
+                        runtimeEnabled={runtimeEnabled}
+                        activeGraph={activeGraph}
+                        onNewGraph={handleNewGraph}
+                        setActiveGraph={setActiveGraph}/>
                 </div>
 
                 <div className="action-list-panel">
                     <ActionListPanel
-                        // actionsIn={actions}      // TODO: Get actions from backend / workspace
                         actionsIn={actions}
                         onActionSelect={handleActionSelect}/>
                 </div>

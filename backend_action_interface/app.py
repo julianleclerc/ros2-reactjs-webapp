@@ -84,7 +84,6 @@ def load_actions(actions_dir):
         if filename.endswith('.json'):
             with open(os.path.join(actions_dir, filename), 'r') as file:
                 action = json.load(file)
-                print("action: ", action)
                 actions[action["name"]] = action
     return actions
 
@@ -115,7 +114,6 @@ if __name__ == '__main__':
         ri_node = ri.node
 
         actions_list, graphs_indexed, graphs_running = ri.get_graphs()
-        print("actions_list: ", actions_list)
         for a in actions_list:
             a_json = json.loads(a)
             actions[a_json["name"]] = a_json
@@ -128,6 +126,5 @@ if __name__ == '__main__':
     else:
         graphs = load_graphs("example_graphs")
         actions = load_actions("example_actions")
-        print("actions: ", actions)
 
     socketio.run(app, host='0.0.0.0', port=4000)
