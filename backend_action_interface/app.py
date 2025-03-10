@@ -31,6 +31,7 @@ def set_graph(key):
         graphs[key] = new_data
         print (f'Updated graph: {key}')
         # print (f'data   {json.dumps(new_data, indent=4)}')
+        print (f'Updated graphs: {graphs[key]}')
         return jsonify({"message": "Graph updated successfully"}), 200
     else:
         return jsonify({"error": "Graph not found"}), 404
@@ -53,6 +54,24 @@ def exec_graph(key):
     else:
         return jsonify({"error": "Graph not found"}), 404
 
+@app.route('/api/graphs', methods=['POST'])
+def create_graph():
+    global graphs
+    try:
+        graph_data = request.json
+        graph_name = graph_data['graph_name']
+        
+        # Store the new graph in memory
+        graphs[graph_name] = graph_data
+        
+        # Emit the updated graphs list to all clients
+        graphs_list = list(graphs.values())
+        socketio.emit('graphs', graphs_list)
+        
+        return jsonify({'message': f'Graph {graph_name} created successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
@@ -61,6 +80,9 @@ def handle_connect():
 
     graphs_list = list(graphs.values())
     socketio.emit('graphs', graphs_list)
+
+    actions_list = list(actions.values())
+    socketio.emit('actions', actions_list)
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -75,8 +97,18 @@ def load_graphs(graphs_dir):
                 graphs[graph["graph_name"]] = graph
     return graphs
 
+def load_actions(actions_dir):
+    actions = {}
+    for filename in os.listdir(actions_dir):
+        if filename.endswith('.json'):
+            with open(os.path.join(actions_dir, filename), 'r') as file:
+                action = json.load(file)
+                actions[action["name"]] = action
+    return actions
+
 def graph_feedback_callback(actor, graphs_in):
     global graphs
+    global actions
 
     for g in graphs_in:
         g_json = json.loads(g)
@@ -100,9 +132,8 @@ if __name__ == '__main__':
         ri.wait_until_initialized()
         ri_node = ri.node
 
-        actions, graphs_indexed, graphs_running = ri.get_graphs()
-
-        for a in actions:
+        actions_list, graphs_indexed, graphs_running = ri.get_graphs()
+        for a in actions_list:
             a_json = json.loads(a)
             actions[a_json["name"]] = a_json
 
@@ -113,5 +144,6 @@ if __name__ == '__main__':
         print (" * ROS interface active")
     else:
         graphs = load_graphs("example_graphs")
+        actions = load_actions("example_actions")
 
     socketio.run(app, host='0.0.0.0', port=4000)

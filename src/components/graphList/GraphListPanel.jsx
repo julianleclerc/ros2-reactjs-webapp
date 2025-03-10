@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import './GraphListPanel.css'; // Import the CSS file
 
-const GraphListPanel = ({ graphsIn, onGraphSelect, onStartStopClick, runtimeEnabled }) => {
+const GraphListPanel = forwardRef(({ graphsIn, onGraphSelect, onStartStopClick, onNewGraph, runtimeEnabled }, ref) => {
     const [graphs, setGraphs] = useState([]);
-    const [activeGraph, setActiveGraph] = useState();
-
+    const [activeGraph, setActiveGraph] = useState(null);
+    
     useEffect(() => {
         if (graphsIn) {
             setGraphs(graphsIn)
         }
     }, [graphsIn]);
+
+    useImperativeHandle(ref, () => ({
+        clearActiveGraph: () => {
+            setActiveGraph(null);
+        },
+        setActiveGraph: (graph) => {
+            setActiveGraph(graph);
+        }
+    }));
 
     const handleGraphSelectClick = (graph) => {
         setActiveGraph(graph);
@@ -25,19 +34,15 @@ const GraphListPanel = ({ graphsIn, onGraphSelect, onStartStopClick, runtimeEnab
             <div className="buttons-column">
                 <h2>Graphs</h2>
                 {graphs.map((graph, index) => (
-                    <div className="buttons-row">
-
-                        {/* Button for selecting the graph */}
+                    <div className="buttons-row" key={index}>
                         <button
                             className={`text-button ${activeGraph?.graph_name === graph.graph_name ? 'active' : ''}`}
-                            key={index}
                             onClick={() => handleGraphSelectClick(graph)}
                         >
                             {graph.graph_name}
                         </button>
 
-                        {/* Button for starting/stopping the graph */}
-                        {runtimeEnabled ? (
+                        {runtimeEnabled && (
                             <button
                                 className={`icon-button ${graph.graph_state === "RUNNING" ? 'running' : ''}`}
                                 onClick={() => handleStartStopClick(graph)}
@@ -50,16 +55,27 @@ const GraphListPanel = ({ graphsIn, onGraphSelect, onStartStopClick, runtimeEnab
                                     className="bi bi-play-fill"
                                     viewBox="0 0 16 16"
                                 >
-                                    {graph.graph_state === "RUNNING" ? (<rect x="4" y="4" width="8" height="8" />) : (<path d="M3 2 L13 8 L3 14 Z"/>)}
+                                    {graph.graph_state === "RUNNING" ? 
+                                        (<rect x="4" y="4" width="8" height="8" />) : 
+                                        (<path d="M3 2 L13 8 L3 14 Z"/>)
+                                    }
                                 </svg>
                             </button>
-                        ) : null }
+                        )}
                     </div>
                 ))}
-
+                
+                <div className="buttons-row">
+                    <button
+                        className="text-button"
+                        onClick={onNewGraph}
+                    >
+                        + 
+                    </button>
+                </div>
             </div>
         </div>
     );
-};
+});
 
 export default GraphListPanel;

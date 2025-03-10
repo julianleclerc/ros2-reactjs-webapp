@@ -5,11 +5,14 @@ export type SpinNodeData = {
   title: string;
   icon?: ReactNode;
   subline?: string;
+  actor?: string; // Add actor to the type definition
 };
 
 export default memo(({ data }: NodeProps<Node<SpinNodeData>>) => {
   return (
     <>
+      {data.actor && <div className="actor-label">{data.actor}</div>}
+
       <div className={`wrapper ${data.state ? data.state : ""}`}>
         <div className="inner">
           <div className="body">

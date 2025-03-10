@@ -215,3 +215,20 @@ body {
 .react-flow__handle.connectingto {
     border-color: var(--xy-theme-edge-hover);
 }
+
+/* Actor label styling */
+.actor-label {
+  position: absolute;
+  left: 0px;
+  top: -25px;
+  background-color: rgba(100, 100, 100, 0.8);
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  z-index: 10;
+  white-space: nowrap;
+  pointer-events: none; /* Allow interactions with elements behind */
+  font-weight: bold;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
