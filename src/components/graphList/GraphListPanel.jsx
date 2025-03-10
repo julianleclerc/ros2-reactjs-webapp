@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import './GraphListPanel.css'; // Import the CSS file
 
-const GraphListPanel = ({ graphsIn, onGraphSelect, onStartStopClick, onNewGraph, runtimeEnabled, activeGraph, setActiveGraph }) => {
+const GraphListPanel = forwardRef(({ graphsIn, onGraphSelect, onStartStopClick, onNewGraph, runtimeEnabled }, ref) => {
     const [graphs, setGraphs] = useState([]);
+    const [activeGraph, setActiveGraph] = useState(null);
     
-
     useEffect(() => {
         if (graphsIn) {
             setGraphs(graphsIn)
         }
     }, [graphsIn]);
+
+    useImperativeHandle(ref, () => ({
+        clearActiveGraph: () => {
+            setActiveGraph(null);
+        },
+        setActiveGraph: (graph) => {
+            setActiveGraph(graph);
+        }
+    }));
 
     const handleGraphSelectClick = (graph) => {
         setActiveGraph(graph);
@@ -67,6 +76,6 @@ const GraphListPanel = ({ graphsIn, onGraphSelect, onStartStopClick, onNewGraph,
             </div>
         </div>
     );
-};
+});
 
 export default GraphListPanel;

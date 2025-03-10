@@ -7,14 +7,15 @@ import GraphInfoPanel from "../../components/graphInfo/GraphInfoPanel.jsx";
 import "./ActionInterfacePage.css";
 
 const ActionInterfacePage = () => {
-
     const [graphs, setGraphs] = useState(null);
     const [actions, setActions] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null);
+    const [selectedAction, setSelectedAction] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
-    const [activeGraph, setActiveGraph] = useState(null);
+    const graphListRef = useRef();
+    const actionListRef = useRef();
 
     console.log("graphs: ", graphs);
     console.log("actions: ", actions);
@@ -22,7 +23,8 @@ const ActionInterfacePage = () => {
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
         
-        // Always reset selected action regardless of which graph is clicked
+        // Clear selected action and node when selecting a graph
+        setSelectedAction(null);
         setSelectedNode(null);
         
         // Only fetch the graph data if it's a different graph
@@ -30,8 +32,7 @@ const ActionInterfacePage = () => {
             return;
         }
         
-        // Make the NodeEditorPanel spit out currently active graph,
-        // which gets saved in the handleGetCurrentGraph
+        // Make the NodeEditorPanel spit out currently active graph
         if (nodeEditorRef.current) {
             nodeEditorRef.current.getCurrentGraph();
         }
@@ -49,6 +50,9 @@ const ActionInterfacePage = () => {
         } catch (error) {
             console.error('Error fetching data', error);
         }
+
+        // Clear the active action in ActionListPanel
+        actionListRef.current?.clearActiveAction();
     };
 
     const handleGetCurrentGraph = async (updatedGraph) => {
@@ -101,21 +105,35 @@ const ActionInterfacePage = () => {
     const handleActionSelect = async (actionName) => {
         console.log('clicked action!', actionName);
 
-        // Ignore clicks on the same active action name
         if (selectedNode && selectedNode.action_name === actionName) {
             return;
         }
+        setSelectedGraph(null);
+        setSelectedNode(null);
+
+        // Clear the active graph in GraphListPanel
+        graphListRef.current?.clearActiveGraph();
+
+        // Find and set the selected action
+        const action = actions.find(action => action.name === actionName);
+        setSelectedAction(action);
     };
 
     const handleNewGraph = () => {
-        console.log("handleCreateNewGraph");
         const newGraph = {
             graph_name: `NewGraph_${Date.now()}`,
             graph_description: "Newly created graph",
             actions: []
         };
         setGraphs([...graphs, newGraph]);
-        setActiveGraph(newGraph);
+    
+        setSelectedGraph(newGraph);
+        setSelectedAction(null);
+        setSelectedNode(null);
+    
+        // Set the new graph as active in GraphListPanel
+        graphListRef.current?.setActiveGraph(newGraph);
+    
         handleGraphSelect(newGraph.graph_name);
         console.log("new graph added, graphs: ", graphs);
     };
@@ -154,17 +172,18 @@ const ActionInterfacePage = () => {
             <div className="graph-action-list-panel-div">
                 <div className="graph-list-panel">
                     <GraphListPanel
+                        ref={graphListRef}
                         graphsIn={graphs}
                         onGraphSelect={handleGraphSelect}
                         onStartStopClick={handleStartStopClick}
                         runtimeEnabled={runtimeEnabled}
-                        activeGraph={activeGraph}
                         onNewGraph={handleNewGraph}
-                        setActiveGraph={setActiveGraph}/>
+                    />
                 </div>
 
                 <div className="action-list-panel">
                     <ActionListPanel
+                        ref={actionListRef}
                         actionsIn={actions}
                         onActionSelect={handleActionSelect}/>
                 </div>
@@ -180,7 +199,8 @@ const ActionInterfacePage = () => {
             <div className="graph-info-panel">
                 <GraphInfoPanel
                     graphDataIn={selectedGraph}
-                    actionDataIn={selectedNode}
+                    nodeDataIn={selectedNode}
+                    actionDataIn={selectedAction}
                 />
             </div>
         </div>

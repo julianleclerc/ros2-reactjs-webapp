@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import './ActionListPanel.css';
 import { useDnD } from './DnDContext.jsx';
 
-const ActionListPanel = ({ actionsIn, onActionSelect }) => {
+const ActionListPanel = forwardRef(({ actionsIn, onActionSelect }, ref) => {
     const [actions, setActions] = useState([]);
     const [activeAction, setActiveAction] = useState();
     const [_, setType] = useDnD();
@@ -12,6 +12,12 @@ const ActionListPanel = ({ actionsIn, onActionSelect }) => {
             setActions(actionsIn);
         }
     }, [actionsIn]);
+
+    useImperativeHandle(ref, () => ({
+        clearActiveAction: () => {
+            setActiveAction(null);
+        }
+    }));
 
     const handleActionSelectClick = (action) => {
         setActiveAction(action);
@@ -45,10 +51,9 @@ const ActionListPanel = ({ actionsIn, onActionSelect }) => {
                 ) : (
                     <p>No actions available</p>
                 )}
-
             </div>
         </div>
     );
-};
+});
 
 export default ActionListPanel;
