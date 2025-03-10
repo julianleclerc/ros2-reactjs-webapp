@@ -20,9 +20,12 @@ const ActionInterfacePage = () => {
     console.log("graphs: ", graphs);
     console.log("actions: ", actions);
 
+    console.log("selectedGraph: ", selectedGraph);
+    console.log("selectedAction: ", selectedAction);
+    console.log("selectedNode: ", selectedNode);
+
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
-        
         
         // Only fetch the graph data if it's a different graph
         if (selectedGraph && selectedGraph.graph_name === graphName) {
@@ -118,23 +121,42 @@ const ActionInterfacePage = () => {
         nodeEditorRef.current?.clearActiveNode(); // TODO: Remove blue circle around the node. React flow node still applies .selected class for the element. 
     };
 
-    const handleNewGraph = () => {
+    const handleNewGraph = async () => {
         const newGraph = {
             graph_name: `NewGraph_${Date.now()}`,
             graph_description: "Newly created graph",
+            graph_entry: [],
+            graph_exit: [],
             actions: []
         };
-        setGraphs([...graphs, newGraph]);
-    
-        setSelectedGraph(newGraph);
-        setSelectedAction(null);
-        setSelectedNode(null);
-    
-        // Set the new graph as active in GraphListPanel
-        graphListRef.current?.setActiveGraph(newGraph);
-    
-        handleGraphSelect(newGraph.graph_name);
-        console.log("new graph added, graphs: ", graphs);
+
+        try {
+            const response = await fetch('http://localhost:4000/api/graphs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newGraph)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create graph in backend');
+            }
+
+            // Update frontend state after successful backend creation
+            setGraphs([...graphs, newGraph]);
+            setSelectedGraph(newGraph);
+            setSelectedAction(null);
+            setSelectedNode(null);
+
+            // Set the new graph as active in GraphListPanel
+            graphListRef.current?.setActiveGraph(newGraph);
+            handleGraphSelect(newGraph.graph_name);
+            console.log("new graph added, graphs: ", graphs);
+
+        } catch (error) {
+            console.error('Error creating new graph:', error);
+        }
     };
 
     useEffect(() => {

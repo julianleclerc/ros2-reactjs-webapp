@@ -190,21 +190,52 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
       console.log('Action Name at drop:', actionName);
       if (!actionName) return;
 
-      const position = { x: event.clientX, y: event.clientY };    // TODO: need to fix this
-      console.log('Position:', position);
+      // Get the flow container's bounds
+      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
+      const position = {
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top
+      };
 
+      // Create new UMRF node
       const newNode = {
-        id: `node_${Date.now()}`,
+        name: actionName,
+        instance_id: Date.now(), // Use timestamp as temporary unique ID
+        type: "sync", // Default type
+        input_parameters: {}, // Will be populated from action template
+        parents: [],
+        children: [],
+        gui_attributes: {
+          position: position
+        }
+      };
+
+      // Update the graph structure
+      const updatedGraph = {
+        ...activeGraph,
+        actions: [...(activeGraph?.actions || []), newNode]
+      };
+
+      setActiveGraph(updatedGraph);
+      onUpdateGraph(updatedGraph);
+
+      // Add node to flow
+      const flowNode = {
+        id: `${actionName}_${newNode.instance_id}`,
         type: dragType,
         position,
-        data: { title: actionName, label: `${dragType} node` },
+        data: {
+          title: actionName,
+          instance_id: newNode.instance_id,
+          type: "sync",
+          input_parameters: {},
+          output_parameters: {},
+        }
       };
-      console.log('New Node:', newNode);
 
-      // Ensure 'nds' is an array before spreading
-      setNodes((nds) => Array.isArray(nds) ? [...nds, newNode] : [newNode]);
+      setNodes((nds) => Array.isArray(nds) ? [...nds, flowNode] : [flowNode]);
     },
-    [type, setNodes]
+    [type, setNodes, activeGraph, onUpdateGraph]
   );
 
   return (
