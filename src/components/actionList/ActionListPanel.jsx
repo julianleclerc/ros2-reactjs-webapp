@@ -33,12 +33,12 @@ const ActionListPanel = ({ actionsIn, onActionSelect }) => {
                     actions.map((action, index) => (
                         <div className="buttons-row" key={action.id}>
                             <button
-                                className={`text-button ${activeAction?.action_name === action.action_name ? 'active' : ''}`}
+                                className={`text-button ${activeAction?.name === action.name ? 'active' : ''}`}
                                 onClick={() => handleActionSelectClick(action)}
-                                onDragStart={(event) => onDragStart(event, 'action', action.action_name)}
+                                onDragStart={(event) => onDragStart(event, 'action', action.name)}
                                 draggable
                             >
-                                {action.action_name}
+                                {action.name}
                             </button>
                         </div>
                     ))

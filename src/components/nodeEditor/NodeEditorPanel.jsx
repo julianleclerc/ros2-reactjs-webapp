@@ -25,7 +25,7 @@ const nodeTypes = {
   turbo: SpinNode,
 };
 
-const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect }, ref) => {
+const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }, ref) => {
 
   const [activeGraph, setActiveGraph] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState();
@@ -162,9 +162,10 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
     [setEdges],
   );
 
-  const handleActionClick = (action, node) => {
+  const handleNodeClick = (node) => {
+    console.log("Node clicked, node: ", node);
     setSelectedNodeId(node.id);
-    onActionSelect(action);
+    onNodeSelect(node.data);
   };
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -216,16 +217,16 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onActionSelect
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB"}}
-        onNodeClick={(event, node) => handleActionClick(node.data, node)}
+        onNodeClick={(event, node) => handleNodeClick(node)}
         >
           <Background />
       </ReactFlow>
   );
 });
 
-export default forwardRef(({graphDataIn, onUpdateGraph, onActionSelect}, ref) => (
+export default forwardRef(({graphDataIn, onUpdateGraph, onNodeSelect}, ref) => (
   <ReactFlowProvider>
-    <NodeEditorPanel ref={ref} graphDataIn={graphDataIn} onUpdateGraph={onUpdateGraph} onActionSelect={onActionSelect} />
+    <NodeEditorPanel ref={ref} graphDataIn={graphDataIn} onUpdateGraph={onUpdateGraph} onNodeSelect={onNodeSelect} />
   </ReactFlowProvider>
 ));
 

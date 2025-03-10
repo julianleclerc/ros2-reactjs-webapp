@@ -62,6 +62,9 @@ def handle_connect():
     graphs_list = list(graphs.values())
     socketio.emit('graphs', graphs_list)
 
+    actions_list = list(actions.values())
+    socketio.emit('actions', actions_list)
+
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Client disconnected')
@@ -75,8 +78,19 @@ def load_graphs(graphs_dir):
                 graphs[graph["graph_name"]] = graph
     return graphs
 
+def load_actions(actions_dir):
+    actions = {}
+    for filename in os.listdir(actions_dir):
+        if filename.endswith('.json'):
+            with open(os.path.join(actions_dir, filename), 'r') as file:
+                action = json.load(file)
+                print("action: ", action)
+                actions[action["name"]] = action
+    return actions
+
 def graph_feedback_callback(actor, graphs_in):
     global graphs
+    global actions
 
     for g in graphs_in:
         g_json = json.loads(g)
@@ -100,9 +114,9 @@ if __name__ == '__main__':
         ri.wait_until_initialized()
         ri_node = ri.node
 
-        actions, graphs_indexed, graphs_running = ri.get_graphs()
-
-        for a in actions:
+        actions_list, graphs_indexed, graphs_running = ri.get_graphs()
+        print("actions_list: ", actions_list)
+        for a in actions_list:
             a_json = json.loads(a)
             actions[a_json["name"]] = a_json
 
@@ -113,5 +127,7 @@ if __name__ == '__main__':
         print (" * ROS interface active")
     else:
         graphs = load_graphs("example_graphs")
+        actions = load_actions("example_actions")
+        print("actions: ", actions)
 
     socketio.run(app, host='0.0.0.0', port=4000)

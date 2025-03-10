@@ -9,12 +9,14 @@ import "./ActionInterfacePage.css";
 const ActionInterfacePage = () => {
 
     const [graphs, setGraphs] = useState(null);
+    const [actions, setActions] = useState(null);
     const [selectedGraph, setSelectedGraph] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     const nodeEditorRef = useRef();
 
-    const [actions, setActions] = useState(null);
+    console.log("graphs: ", graphs);
+    console.log("actions: ", actions);
 
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
@@ -108,7 +110,13 @@ const ActionInterfacePage = () => {
         const socket = io('http://localhost:4000');
 
         socket.on('graphs', (data) => {
+            console.log("graphs from socket: ", data);
             setGraphs(data);
+        });
+
+        socket.on('actions', (data) => {
+            console.log("actions from socket: ", data);
+            setActions(data);
         });
 
         socket.on('runtime_enabled', (data) => {
@@ -141,10 +149,7 @@ const ActionInterfacePage = () => {
                 <div className="action-list-panel">
                     <ActionListPanel
                         // actionsIn={actions}      // TODO: Get actions from backend / workspace
-                        actionsIn={[
-                        { id: 'action-1', action_name: 'Action 1' },  // For testing.
-                        { id: 'action-2', action_name: 'Action 2' }
-                        ]}
+                        actionsIn={actions}
                         onActionSelect={handleActionSelect}/>
                 </div>
             </div>
@@ -154,7 +159,7 @@ const ActionInterfacePage = () => {
                     ref={nodeEditorRef}
                     graphDataIn={selectedGraph}
                     onUpdateGraph={handleGetCurrentGraph}
-                    onActionSelect={handleNodeSelect}/>
+                    onNodeSelect={handleNodeSelect}/>
             </div>
             <div className="graph-info-panel">
                 <GraphInfoPanel
