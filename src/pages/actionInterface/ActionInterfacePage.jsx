@@ -23,9 +23,6 @@ const ActionInterfacePage = () => {
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
         
-        // Clear selected action and node when selecting a graph
-        setSelectedAction(null);
-        setSelectedNode(null);
         
         // Only fetch the graph data if it's a different graph
         if (selectedGraph && selectedGraph.graph_name === graphName) {
@@ -51,8 +48,10 @@ const ActionInterfacePage = () => {
             console.error('Error fetching data', error);
         }
 
-        // Clear the active action in ActionListPanel
+        setSelectedAction(null);
+        setSelectedNode(null);
         actionListRef.current?.clearActiveAction();
+        nodeEditorRef.current?.clearActiveNode();
     };
 
     const handleGetCurrentGraph = async (updatedGraph) => {
@@ -108,15 +107,15 @@ const ActionInterfacePage = () => {
         if (selectedNode && selectedNode.action_name === actionName) {
             return;
         }
-        setSelectedGraph(null);
-        setSelectedNode(null);
-
-        // Clear the active graph in GraphListPanel
-        graphListRef.current?.clearActiveGraph();
 
         // Find and set the selected action
         const action = actions.find(action => action.name === actionName);
         setSelectedAction(action);
+
+        setSelectedGraph(null);
+        setSelectedNode(null);
+        graphListRef.current?.clearActiveGraph();
+        nodeEditorRef.current?.clearActiveNode(); // TODO: Remove blue circle around the node. React flow node still applies .selected class for the element. 
     };
 
     const handleNewGraph = () => {

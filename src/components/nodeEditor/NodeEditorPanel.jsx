@@ -40,6 +40,10 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
       if (activeGraph) {
         onUpdateGraph(flowToJson());
       }
+    },
+    clearActiveNode: () => {
+      console.log("Clearing active node", selectedNodeId);
+      setSelectedNodeId(null);
     }
   }));
 
