@@ -9,6 +9,7 @@ import {
   useReactFlow,
   // Panel,
 } from '@xyflow/react';
+import produce from 'immer';
 
 import SpinNode, { type SpinNodeData } from './SpinNode.tsx';
 
@@ -34,6 +35,9 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const { screenToFlowPosition } = useReactFlow();
   const [type] = useDnD();
+
+  console.log("Nodes: ", nodes)
+  console.log("Edges: ", edges)
 
   useImperativeHandle(ref, () => ({
     getCurrentGraph() {
@@ -162,8 +166,72 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
   }, [graphDataIn, jsonToFlow]);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+    (params) => {
+      console.log("onConnect: ", params);
+      
+      // Add the new edge to React Flow
+      const newEdges = addEdge(params, edges);
+      setEdges(newEdges);
+
+      // Find source and target nodes
+      const sourceNode = nodes.find(node => node.id === params.source);
+      const targetNode = nodes.find(node => node.id === params.target);
+
+      if (sourceNode && targetNode) {
+        // Update the active graph state
+        const updatedGraph = produce(activeGraph, draft => {
+          // Find the source and target actions in the graph
+          const sourceAction = draft.actions.find(
+            action => `${action.name}_${action.instance_id}` === params.source
+          );
+          const targetAction = draft.actions.find(
+            action => `${action.name}_${action.instance_id}` === params.target
+          );
+
+          if (sourceAction && targetAction) {
+            // Add child to source action
+            if (!sourceAction.children) {
+              sourceAction.children = [];
+            }
+            
+            // Check if child already exists to prevent duplicates
+            const childExists = sourceAction.children.some(
+              child => child.name === targetAction.name && 
+                       child.instance_id === targetAction.instance_id
+            );
+
+            if (!childExists) {
+              sourceAction.children.push({
+                name: targetAction.name,
+                instance_id: targetAction.instance_id
+              });
+            }
+
+            // Add parent to target action
+            if (!targetAction.parents) {
+              targetAction.parents = [];
+            }
+
+            const parentExists = targetAction.parents.some(
+              parent => parent.name === sourceAction.name && 
+                        parent.instance_id === sourceAction.instance_id
+            );
+
+            if (!parentExists) {
+              targetAction.parents.push({
+                name: sourceAction.name,
+                instance_id: sourceAction.instance_id
+              });
+            }
+          }
+        });
+
+        // Update the graph in the backend and frontend
+        setActiveGraph(updatedGraph);
+        onUpdateGraph(updatedGraph);
+      }
+    },
+    [edges, nodes, activeGraph, onUpdateGraph, setEdges]
   );
 
   const handleNodeClick = (node) => {
