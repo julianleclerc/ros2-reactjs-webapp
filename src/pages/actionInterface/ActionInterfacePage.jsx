@@ -27,6 +27,11 @@ const ActionInterfacePage = () => {
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
         
+        setSelectedAction(null);
+        setSelectedNode(null);
+        actionListRef.current?.clearActiveAction();
+        nodeEditorRef.current?.clearActiveNode();
+
         // Only fetch the graph data if it's a different graph
         if (selectedGraph && selectedGraph.graph_name === graphName) {
             return;
@@ -51,10 +56,6 @@ const ActionInterfacePage = () => {
             console.error('Error fetching data', error);
         }
 
-        setSelectedAction(null);
-        setSelectedNode(null);
-        actionListRef.current?.clearActiveAction();
-        nodeEditorRef.current?.clearActiveNode();
     };
 
     const handleGetCurrentGraph = async (updatedGraph) => {
