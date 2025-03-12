@@ -262,66 +262,60 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
 
   const onDrop = useCallback(
     (event) => {
-        event.preventDefault();
-        console.log('Drop event triggered');
+      event.preventDefault();
+      console.log('Drop event triggered');
 
-        const dragType = type || 'turbo';
-        console.log('Type at drop:', dragType);
-        if (!dragType) return;
+      const dragType = type || 'turbo';
+      console.log('Type at drop:', dragType);
+      if (!dragType) return;
 
-        const actionName = event.dataTransfer.getData('actionName');
-        console.log('Action Name at drop:', actionName);
-        if (!actionName) return;
+      const actionName = event.dataTransfer.getData('actionName');
+      console.log('Action Name at drop:', actionName);
+      if (!actionName) return;
 
-        // Ensure an active graph exists
-        if (!activeGraph) {
-            console.warn('No active graph to drop action into');
-            return;
+      // Convert screen coordinates to flow coordinates
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY
+      });
+
+      // Create new UMRF node
+      const newNode = {
+        name: actionName,
+        instance_id: Date.now(), // Use timestamp as temporary unique ID
+        type: "sync", // Default type
+        input_parameters: {}, // Will be populated from action template
+        parents: [],
+        children: [],
+        gui_attributes: {
+          position: position
         }
+      };
 
-        // Convert screen coordinates to flow coordinates
-        const position = screenToFlowPosition({
-          x: event.clientX,
-          y: event.clientY
-        });
+      // Update the graph structure
+      const updatedGraph = {
+        ...activeGraph,
+        actions: [...(activeGraph?.actions || []), newNode]
+      };
 
-        // Create new UMRF node
-        const newNode = {
-          name: actionName,
-          instance_id: Date.now(), // Use timestamp as temporary unique ID
-          type: "sync", // Default type
-          input_parameters: {}, // Will be populated from action template
-          parents: [],
-          children: [],
-          gui_attributes: {
-            position: position
-          }
-        };
+      setActiveGraph(updatedGraph);
+      onUpdateGraph(updatedGraph);
 
-        // Update the graph structure
-        const updatedGraph = {
-          ...activeGraph,
-          actions: [...(activeGraph?.actions || []), newNode]
-        };
+      // Add node to flow
+      const flowNode = {
+        id: `${actionName}_${newNode.instance_id}`,
+        type: dragType,
+        position,
+        data: {
+          title: actionName,
+          instance_id: newNode.instance_id,
+          type: "sync",
+          input_parameters: {},
+          output_parameters: {},
+        }
+      };
 
-        setActiveGraph(updatedGraph);
-        onUpdateGraph(updatedGraph);
-
-        // Add node to flow
-        const flowNode = {
-          id: `${actionName}_${newNode.instance_id}`,
-          type: dragType,
-          position,
-          data: {
-            title: actionName,
-            instance_id: newNode.instance_id,
-            type: "sync",
-            input_parameters: {},
-            output_parameters: {},
-          }
-        };
-
-        setNodes((nds) => Array.isArray(nds) ? [...nds, flowNode] : [flowNode]);
+      setNodes((nds) => Array.isArray(nds) ? [...nds, flowNode] : [flowNode]);
     },
     [type, setNodes, activeGraph, onUpdateGraph, screenToFlowPosition]
   );

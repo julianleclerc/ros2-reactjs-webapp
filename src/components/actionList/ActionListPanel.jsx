@@ -25,12 +25,10 @@ const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph }
     };
 
     const onDragStart = (event, nodeType, actionName) => {
-        // Always allow dragging, but warn if no graph is selected
         setType(nodeType);
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('actionName', actionName);
         
-        // Optional: Add visual feedback if no graph is selected
         if (!selectedGraph) {
             console.warn('Please select a graph before dropping an action');
         }

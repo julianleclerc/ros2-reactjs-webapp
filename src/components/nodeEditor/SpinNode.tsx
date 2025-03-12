@@ -22,8 +22,16 @@ export default memo(({ data }: NodeProps<Node<SpinNodeData>>) => {
               {data.subline && <div className="subline">{data.subline}</div>}
             </div>
           </div>
-          <Handle type="target" position={Position.Top} />
-          <Handle type="source" position={Position.Bottom} />
+          <Handle 
+            type="source" 
+            position={Position.Top} 
+            className="react-flow__handle source" 
+          />
+          <Handle 
+            type="target" 
+            position={Position.Bottom} 
+            className="react-flow__handle target" 
+          />
         </div>
       </div>
     </>
