@@ -33,9 +33,13 @@ const ActionInterfacePage = () => {
         actionListRef.current?.clearActiveAction();
         nodeEditorRef.current?.clearActiveNode();
         
-        // Save current graph before switching
+        // Save current graph before switching - and WAIT for it to complete
         if (selectedGraph && selectedGraph.graph_name !== graphName && nodeEditorRef.current) {
-            nodeEditorRef.current.getCurrentGraph();
+            try {
+                await nodeEditorRef.current.getCurrentGraph();
+            } catch (error) {
+                console.error('Error saving current graph:', error);
+            }
         }
         
         // Always fetch fresh data, even for the same graph
@@ -75,24 +79,29 @@ const ActionInterfacePage = () => {
                 },
                 body: JSON.stringify(updatedGraph)
             });
-
+    
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-
+    
             const result = await response.json();
             console.log(result.message);
-
+    
             setGraphs(prevGraphs => 
                 prevGraphs.map(graph => 
                     graph.graph_name === updatedGraph.graph_name ? updatedGraph : graph
                 )
             );
-
-            setSelectedGraph(updatedGraph);
-
+    
+            // Only update selectedGraph if it's still the same graph we're editing
+            setSelectedGraph(prev => 
+                prev && prev.graph_name === updatedGraph.graph_name ? updatedGraph : prev
+            );
+    
+            return updatedGraph;
         } catch (error) {
             console.error('Error updating graph:', error);
+            throw error; // Rethrow to allow error handling upstream
         }
     };
 

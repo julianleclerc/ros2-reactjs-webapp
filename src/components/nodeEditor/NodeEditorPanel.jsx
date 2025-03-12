@@ -42,8 +42,9 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
   useImperativeHandle(ref, () => ({
     getCurrentGraph() {
       if (activeGraph) {
-        onUpdateGraph(flowToJson());
+        return Promise.resolve(onUpdateGraph(flowToJson()));
       }
+      return Promise.resolve(); // Return resolved promise if no activeGraph
     },
     clearActiveNode: () => {
       console.log("Clearing active node", selectedNodeId);
@@ -173,9 +174,10 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
 
   useEffect(() => {
     return () => {
-        // Clean up when component unmounts or when graphDataIn changes
-        setNodes([]);
-        setEdges([]);
+      // Clean up when component unmounts or when graphDataIn changes
+      setNodes([]);
+      setEdges([]);
+      setActiveGraph(null);
     };
   }, [graphDataIn]);
 
