@@ -27,35 +27,43 @@ const ActionInterfacePage = () => {
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
         
+        // Reset selection states first
         setSelectedAction(null);
         setSelectedNode(null);
         actionListRef.current?.clearActiveAction();
         nodeEditorRef.current?.clearActiveNode();
-
-        // Only fetch the graph data if it's a different graph
-        if (selectedGraph && selectedGraph.graph_name === graphName) {
-            return;
-        }
         
-        // Make the NodeEditorPanel spit out currently active graph
-        if (nodeEditorRef.current) {
+        // Save current graph before switching
+        if (selectedGraph && selectedGraph.graph_name !== graphName && nodeEditorRef.current) {
             nodeEditorRef.current.getCurrentGraph();
         }
-
-        // Fetch the new graph
+        
+        // Always fetch fresh data, even for the same graph
         try {
+            // Set a loading state to prevent race conditions
+            setSelectedGraph(prev => ({
+                ...prev,
+                isLoading: true,
+                graph_name: graphName // Ensure we have at least the name while loading
+            }));
+            
             const response = await fetch(`http://localhost:4000/api/graphs/${graphName}`);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
 
             const result = await response.json();
+            
+            // Use functional update to avoid stale closures
             setSelectedGraph(result);
-
         } catch (error) {
             console.error('Error fetching data', error);
+            // Reset loading state on error
+            setSelectedGraph(prev => ({
+                ...prev,
+                isLoading: false
+            }));
         }
-
     };
 
     const handleGetCurrentGraph = async (updatedGraph) => {
@@ -194,7 +202,19 @@ const ActionInterfacePage = () => {
     // Update the rendered graph when the state changes
     useEffect(() => {
         if (graphs && selectedGraph) {
-            setSelectedGraph(graphs.find(graph => graph.graph_name === selectedGraph.graph_name));
+            // Store the current graph name to avoid race conditions
+            const currentGraphName = selectedGraph.graph_name;
+            
+            // Find the updated graph data
+            const updatedGraph = graphs.find(graph => graph.graph_name === currentGraphName);
+            
+            if (updatedGraph) {
+                // Only update if we're still looking at the same graph
+                // Use a functional update to avoid stale closures
+                setSelectedGraph(prev => 
+                    prev && prev.graph_name === currentGraphName ? updatedGraph : prev
+                );
+            }
         }
     }, [graphs]);
 

@@ -52,12 +52,18 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
   }));
 
   const jsonToFlow = useCallback((graphJson) => {
-
-    const new_nodes: Node<SpinNodeData>[] = graphJson.actions?.map((action) => {
-
-      console.log("Json to Flow action: ", action);
-      console.log("Action actor: ", action);
-      //console.log("Action input parameters: ", action.input_parameters);
+    // Early return if graphJson is undefined or null
+    if (!graphJson) {
+      console.warn('jsonToFlow called with undefined or null graphJson');
+      setNodes([]);
+      setEdges([]);
+      setActiveGraph(null);
+      return;
+    }
+  
+    // Add a check for actions array
+    const new_nodes = graphJson.actions?.map((action) => {
+      // Existing node creation logic
       let nodeData = {
         title: action.name,
         subline: action.state && action.state !== 'UNINITIALIZED' ? action.state : '',
@@ -67,26 +73,26 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
         output_parameters: action.output_parameters,
         actor: action.actor,
       };
-
+  
       // Conditionally add state field
       if (action.state) {
-          nodeData.state = action.state;
+        nodeData.state = action.state;
       }
-
+  
       return {
         id: `${action.name}_${action.instance_id}`,
         data: nodeData,
-        position: action.gui_attributes.position,
+        position: action.gui_attributes?.position || { x: 0, y: 0 },
         type: 'turbo'
       };
-    });
-
-    const new_edges = graphJson.actions.flatMap(action =>
+    }) || [];
+  
+    const new_edges = graphJson.actions?.flatMap(action =>
       action.children?.map(child => ({
         id: `${action.name}_${action.instance_id} to ${child.name}_${child.instance_id}`,
         source: `${action.name}_${action.instance_id}`,
         target: `${child.name}_${child.instance_id}`,
-
+  
         // Needed for converting back to UMRF graph
         source_name: action.name,
         source_id:   action.instance_id,
@@ -94,7 +100,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
         target_id:   child.instance_id,
       })) || []
     );
-
+  
     setActiveGraph(graphJson)
     setNodes(new_nodes)
     setEdges(new_edges)
@@ -164,6 +170,14 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
       jsonToFlow(graphDataIn);
     }
   }, [graphDataIn, jsonToFlow]);
+
+  useEffect(() => {
+    return () => {
+        // Clean up when component unmounts or when graphDataIn changes
+        setNodes([]);
+        setEdges([]);
+    };
+  }, [graphDataIn]);
 
   const onConnect = useCallback(
     (params) => {
@@ -304,12 +318,74 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
     [type, setNodes, activeGraph, onUpdateGraph, screenToFlowPosition]
   );
 
+  const onNodesDelete = useCallback(
+    (deletedNodes) => {
+      console.log("Nodes deleted:", deletedNodes);
+      
+      if (!activeGraph) return;
+      
+      // Create updated graph without the deleted nodes
+      const updatedGraph = produce(activeGraph, draft => {
+        // For each deleted node, remove it from the actions array
+        deletedNodes.forEach(deletedNode => {
+          const nodeId = deletedNode.id;
+          const [nodeName, nodeInstanceId] = nodeId.split('_');
+          
+          // Find the index of the action to remove
+          const actionIndex = draft.actions.findIndex(
+            action => action.name === deletedNode.data.title && 
+                     action.instance_id.toString() === deletedNode.data.instance_id.toString()
+          );
+          
+          if (actionIndex !== -1) {
+            // Remove the action
+            draft.actions.splice(actionIndex, 1);
+            
+            // Update parent/child relationships
+            draft.actions.forEach(action => {
+              // Remove from children arrays
+              if (action.children) {
+                action.children = action.children.filter(
+                  child => !(child.name === deletedNode.data.title && 
+                            child.instance_id.toString() === deletedNode.data.instance_id.toString())
+                );
+              }
+              
+              // Remove from parents arrays
+              if (action.parents) {
+                action.parents = action.parents.filter(
+                  parent => !(parent.name === deletedNode.data.title && 
+                             parent.instance_id.toString() === deletedNode.data.instance_id.toString())
+                );
+              }
+            });
+          }
+        });
+      });
+      
+      // Update local state and backend
+      setActiveGraph(updatedGraph);
+      onUpdateGraph(updatedGraph);
+      const wasSelectedNodeDeleted = deletedNodes.some(
+        node => node.id === selectedNodeId
+    );
+    
+    if (wasSelectedNodeDeleted) {
+        setSelectedNodeId(null);
+        onNodeSelect(null);
+    }
+    
+    },
+    [activeGraph, onUpdateGraph]
+  );
+
   return (
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodesDelete={onNodesDelete}
         onConnect={onConnect}
         onInit={setRfInstance}
         nodeTypes={nodeTypes}
