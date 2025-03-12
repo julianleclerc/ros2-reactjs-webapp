@@ -2,7 +2,7 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'rea
 import './ActionListPanel.css';
 import { useDnD } from './DnDContext.jsx';
 
-const ActionListPanel = forwardRef(({ actionsIn, onActionSelect }, ref) => {
+const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph }, ref) => {
     const [actions, setActions] = useState([]);
     const [activeAction, setActiveAction] = useState();
     const [_, setType] = useDnD();
@@ -25,9 +25,16 @@ const ActionListPanel = forwardRef(({ actionsIn, onActionSelect }, ref) => {
     };
 
     const onDragStart = (event, nodeType, actionName) => {
+        // Always allow dragging, but warn if no graph is selected
         setType(nodeType);
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('actionName', actionName);
+        
+        // Optional: Add visual feedback if no graph is selected
+        if (!selectedGraph) {
+            console.warn('Please select a graph before dropping an action');
+        }
+
         console.log('Dragging:', nodeType, ", with action name: ", actionName);
     };
 
@@ -39,7 +46,7 @@ const ActionListPanel = forwardRef(({ actionsIn, onActionSelect }, ref) => {
                     actions.map((action, index) => (
                         <div className="buttons-row" key={action.id}>
                             <button
-                                className={`text-button ${activeAction?.name === action.name ? 'active' : ''}`}
+                                className={`text-button ${activeAction?.name === action.name ? 'active-action' : ''}`}
                                 onClick={() => handleActionSelectClick(action)}
                                 onDragStart={(event) => onDragStart(event, 'action', action.name)}
                                 draggable

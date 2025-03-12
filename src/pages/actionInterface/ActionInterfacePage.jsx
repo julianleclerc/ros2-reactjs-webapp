@@ -27,10 +27,9 @@ const ActionInterfacePage = () => {
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
         
-        // Reset selection states first
         setSelectedAction(null);
-        setSelectedNode(null);
         actionListRef.current?.clearActiveAction();
+        setSelectedNode(null);
         nodeEditorRef.current?.clearActiveNode();
         
         // Save current graph before switching - and WAIT for it to complete
@@ -142,9 +141,11 @@ const ActionInterfacePage = () => {
         const action = actions.find(action => action.name === actionName);
         setSelectedAction(action);
 
-        setSelectedGraph(null);
+        // TODO: Remove this
+        //setSelectedGraph(null);
+        //graphListRef.current?.clearActiveGraph();
+
         setSelectedNode(null);
-        graphListRef.current?.clearActiveGraph();
         nodeEditorRef.current?.clearActiveNode(); // TODO: Remove blue circle around the node. React flow node still applies .selected class for the element. 
     };
 
@@ -210,6 +211,10 @@ const ActionInterfacePage = () => {
 
     // Update the rendered graph when the state changes
     useEffect(() => {
+        if (graphs && graphs.length > 0 && !selectedGraph) {
+            handleGraphSelect(graphs[0].graph_name);
+        }
+
         if (graphs && selectedGraph) {
             // Store the current graph name to avoid race conditions
             const currentGraphName = selectedGraph.graph_name;
