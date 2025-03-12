@@ -73,6 +73,15 @@ const ActionInterfacePage = () => {
 
             const result = await response.json();
             console.log(result.message);
+
+            setGraphs(prevGraphs => 
+                prevGraphs.map(graph => 
+                    graph.graph_name === updatedGraph.graph_name ? updatedGraph : graph
+                )
+            );
+
+            setSelectedGraph(updatedGraph);
+
         } catch (error) {
             console.error('Error updating graph:', error);
         }
