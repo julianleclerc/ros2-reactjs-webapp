@@ -213,6 +213,7 @@ const ActionInterfacePage = () => {
     useEffect(() => {
         if (graphs && graphs.length > 0 && !selectedGraph) {
             handleGraphSelect(graphs[0].graph_name);
+            graphListRef.current?.setActiveGraph(graphs[0]);
         }
 
         if (graphs && selectedGraph) {
