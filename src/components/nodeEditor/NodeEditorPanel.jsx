@@ -6,7 +6,7 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
-  // useReactFlow,
+  useReactFlow,
   // Panel,
 } from '@xyflow/react';
 
@@ -32,7 +32,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
   const [edges, setEdges, onEdgesChange] = useEdgesState();
   const [rfInstance, setRfInstance] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
-  // const { setViewport } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
   const [type] = useDnD();
 
   useImperativeHandle(ref, () => ({
@@ -182,7 +182,6 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
       console.log('Drop event triggered');
 
       const dragType = type || 'turbo';
-
       console.log('Type at drop:', dragType);
       if (!dragType) return;
 
@@ -190,12 +189,11 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
       console.log('Action Name at drop:', actionName);
       if (!actionName) return;
 
-      // Get the flow container's bounds
-      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
-      const position = {
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top
-      };
+      // Convert screen coordinates to flow coordinates
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY
+      });
 
       // Create new UMRF node
       const newNode = {
@@ -235,7 +233,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
 
       setNodes((nds) => Array.isArray(nds) ? [...nds, flowNode] : [flowNode]);
     },
-    [type, setNodes, activeGraph, onUpdateGraph]
+    [type, setNodes, activeGraph, onUpdateGraph, screenToFlowPosition]
   );
 
   return (
