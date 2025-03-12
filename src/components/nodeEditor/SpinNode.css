@@ -49,10 +49,10 @@ body {
 }
 
 .react-flow__node-turbo .wrapper {
-  overflow: hidden;
-  display: flex;
-  padding: 7px;
+  overflow: visible;
   position: relative;
+  display: flex;
+  padding: 2px;
   border-radius: var(--node-border-radius);
   flex-grow: 1;
   background: rgba(233, 42, 102, 0);
@@ -171,16 +171,18 @@ body {
     background-color: #007bff;
 }
 
-.react-flow__handle.source {
-    top: -6px;
+.react-flow__handle.target {
+    top: -3px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 10;
 }
 
-.react-flow__handle.target {
-    bottom: -6px;
+.react-flow__handle.source {
+    bottom: -3px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 10;
 }
 
 .react-flow__handle.react-flow__handle-bottom {
