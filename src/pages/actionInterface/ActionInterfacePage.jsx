@@ -16,6 +16,7 @@ const ActionInterfacePage = () => {
     const nodeEditorRef = useRef();
     const graphListRef = useRef();
     const actionListRef = useRef();
+    const [isNewAction, setIsNewAction] = useState(false);
 
     console.log("graphs: ", graphs);
     console.log("actions: ", actions);
@@ -187,6 +188,23 @@ const ActionInterfacePage = () => {
         }
     };
 
+    const handleNewAction = () => {
+        const newAction = {
+            name: `NewAction_${Date.now()}`,
+            description: "Newly created action",
+            parameters: {}
+        };
+
+        setSelectedAction(newAction);
+        setIsNewAction(true);
+        setSelectedGraph(null);
+        setSelectedNode(null);
+    };
+
+    const handleActionGenerated = () => {
+        setIsNewAction(false);
+    };
+
     useEffect(() => {
         const socket = io('http://localhost:4000');
 
@@ -251,7 +269,9 @@ const ActionInterfacePage = () => {
                     <ActionListPanel
                         ref={actionListRef}
                         actionsIn={actions}
-                        onActionSelect={handleActionSelect}/>
+                        onActionSelect={handleActionSelect}
+                        onNewAction={handleNewAction}
+                    />
                 </div>
             </div>
 
@@ -267,6 +287,8 @@ const ActionInterfacePage = () => {
                     graphDataIn={selectedGraph}
                     nodeDataIn={selectedNode}
                     actionDataIn={selectedAction}
+                    isNewAction={isNewAction}
+                    onActionGenerated={handleActionGenerated}
                 />
             </div>
         </div>

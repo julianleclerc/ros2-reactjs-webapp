@@ -58,7 +58,15 @@ body {
   background: rgba(233, 42, 102, 0);
 }
 
-.RUNNING:before {
+/* Make the inner container always show the spinner when RUNNING */
+.RUNNING .inner {
+  position: relative;
+  overflow: hidden; /* This will clip the spinner */
+  z-index: 1;
+}
+
+/* Ensure the spinner is always visible, not just on hover */
+.RUNNING .inner:before {
   content: '';
   position: absolute;
   padding-bottom: calc(100% * 1.4);
@@ -66,7 +74,6 @@ body {
   left: 50%;
   top: 50%;
   border-radius: 100%;
-
   background: conic-gradient(
     from -160deg at 50% 50%,
     #2897ff 0deg,
@@ -74,6 +81,21 @@ body {
   );
   animation: spinner 4s linear infinite;
   transform: translate(-50%, -50%) rotate(0deg);
+  z-index: -1; /* Keep it behind the content */
+  opacity: 1; /* Ensure it's fully visible */
+}
+
+/* Remove any hover-dependent visibility */
+.react-flow__node-turbo .inner:hover {
+  background: #dbdbdb;
+  transform: scale(1.011);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Ensure the spinner remains visible even when the node is selected */
+.react-flow__node.selected .RUNNING .inner:before {
+  /* Keep the spinner visible even when selected */
+  opacity: 1;
   z-index: -1;
 }
 
@@ -118,23 +140,6 @@ body {
   text-align: center;
   flex-grow: 1;
   position: relative;
-}
-
-.react-flow__node-turbo .inner:hover {
-  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
-
-  background: #dbdbdb;
-  transform: scale(1.011);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  /* border-color: #d9d9d9; */
-}
-
-.react-flow__node-turbo .inner:focus {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  background: #752c2c00;
-  /* transform: scale(1.011);
-  transition: background-color 0.3s ease, transform 0.2s ease; */
-  /* border-color: #d9d9d9; */
 }
 
 .react-flow__node-turbo .icon {

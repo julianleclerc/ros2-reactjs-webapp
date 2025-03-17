@@ -60,15 +60,29 @@ def create_graph():
     try:
         graph_data = request.json
         graph_name = graph_data['graph_name']
-        
-        # Store the new graph in memory
         graphs[graph_name] = graph_data
         
-        # Emit the updated graphs list to all clients
         graphs_list = list(graphs.values())
         socketio.emit('graphs', graphs_list)
         
         return jsonify({'message': f'Graph {graph_name} created successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/generate-action', methods=['POST']) 
+def generate_action():
+    global actions
+    try:
+        action_data = request.json
+        print (f'Generating action: {action_data}')
+        
+        action_name = action_data['name']
+        actions[action_name] = action_data
+        
+        actions_list = list(actions.values())
+        socketio.emit('actions', actions_list)
+    
+        return jsonify({'message': f'Action {action_name} created successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

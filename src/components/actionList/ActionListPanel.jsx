@@ -2,7 +2,7 @@ import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'rea
 import './ActionListPanel.css';
 import { useDnD } from './DnDContext.jsx';
 
-const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph }, ref) => {
+const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph, onNewAction }, ref) => {
     const [actions, setActions] = useState([]);
     const [activeAction, setActiveAction] = useState();
     const [_, setType] = useDnD();
@@ -56,6 +56,14 @@ const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph }
                 ) : (
                     <p>No actions available</p>
                 )}
+                <div className="buttons-row">
+                    <button 
+                        className="text-button"
+                        onClick={onNewAction}
+                    >
+                        +
+                    </button>
+                </div>
             </div>
         </div>
     );
