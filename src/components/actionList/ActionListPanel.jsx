@@ -1,26 +1,11 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React from 'react';
 import './ActionListPanel.css';
 import { useDnD } from './DnDContext.jsx';
 
-const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph, onNewAction }, ref) => {
-    const [actions, setActions] = useState([]);
-    const [activeAction, setActiveAction] = useState();
+const ActionListPanel = ({ actions, activeActionId, onActionSelect, selectedGraph, onNewAction }) => {
     const [_, setType] = useDnD();
 
-    useEffect(() => {
-        if (actionsIn && Array.isArray(actionsIn)) {
-            setActions(actionsIn);
-        }
-    }, [actionsIn]);
-
-    useImperativeHandle(ref, () => ({
-        clearActiveAction: () => {
-            setActiveAction(null);
-        }
-    }));
-
     const handleActionSelectClick = (action) => {
-        setActiveAction(action);
         onActionSelect(action.name);
     };
 
@@ -40,11 +25,11 @@ const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph, 
         <div>
             <div className="buttons-column">
                 <h2>Actions</h2>
-                {actions.length > 0 ? (
+                {actions && actions.length > 0 ? (
                     actions.map((action, index) => (
-                        <div className="buttons-row" key={action.id}>
+                        <div className="buttons-row" key={action.id || index}>
                             <button
-                                className={`text-button ${activeAction?.name === action.name ? 'active-action' : ''}`}
+                                className={`text-button ${activeActionId === action.name ? 'active-action' : ''}`}
                                 onClick={() => handleActionSelectClick(action)}
                                 onDragStart={(event) => onDragStart(event, 'action', action.name)}
                                 draggable
@@ -67,6 +52,6 @@ const ActionListPanel = forwardRef(({ actionsIn, onActionSelect, selectedGraph, 
             </div>
         </div>
     );
-});
+};
 
 export default ActionListPanel;

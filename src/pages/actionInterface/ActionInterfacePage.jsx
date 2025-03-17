@@ -7,34 +7,47 @@ import GraphInfoPanel from "../../components/graphInfo/GraphInfoPanel.jsx";
 import "./ActionInterfacePage.css";
 
 const ActionInterfacePage = () => {
+    // Data states
     const [graphs, setGraphs] = useState(null);
     const [actions, setActions] = useState(null);
-    const [selectedGraph, setSelectedGraph] = useState(null);
-    const [selectedAction, setSelectedAction] = useState(null);
-    const [selectedNode, setSelectedNode] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
+    
+    // Add a separate state for the active graph
+    const [activeGraph, setActiveGraph] = useState(null);
+    
+    // Selection state - for info panel only
+    const [selectedElement, setSelectedElement] = useState({
+        type: null, // 'graph', 'node', 'action'
+        data: null
+    });
+    
+    // Track active IDs for visual selection in panels
+    const [activeGraphId, setActiveGraphId] = useState(null);
+    const [activeActionId, setActiveActionId] = useState(null);
+    const [activeNodeId, setActiveNodeId] = useState(null);
+    
+    const [isNewAction, setIsNewAction] = useState(false);
+    
+    // Only keep refs that are truly necessary
     const nodeEditorRef = useRef();
     const graphListRef = useRef();
     const actionListRef = useRef();
-    const [isNewAction, setIsNewAction] = useState(false);
 
     console.log("graphs: ", graphs);
     console.log("actions: ", actions);
 
-    console.log("selectedGraph: ", selectedGraph);
-    console.log("selectedAction: ", selectedAction);
-    console.log("selectedNode: ", selectedNode);
+    console.log("selectedElement: ", selectedElement);
 
     const handleGraphSelect = async (graphName) => {
         console.log('clicked graph!', graphName);
         
-        setSelectedAction(null);
-        actionListRef.current?.clearActiveAction();
-        setSelectedNode(null);
+        // Clear other active selections visually
+        setActiveActionId(null);
+        setActiveNodeId(null);
         nodeEditorRef.current?.clearActiveNode();
         
-        // Save current graph before switching - and WAIT for it to complete
-        if (selectedGraph && selectedGraph.graph_name !== graphName && nodeEditorRef.current) {
+        // Save current graph before switching
+        if (activeGraphId && activeGraphId !== graphName && nodeEditorRef.current) {
             try {
                 await nodeEditorRef.current.getCurrentGraph();
             } catch (error) {
@@ -42,14 +55,9 @@ const ActionInterfacePage = () => {
             }
         }
         
-        // Always fetch fresh data, even for the same graph
         try {
-            // Set a loading state to prevent race conditions
-            setSelectedGraph(prev => ({
-                ...prev,
-                isLoading: true,
-                graph_name: graphName // Ensure we have at least the name while loading
-            }));
+            // Set loading state
+            setActiveGraphId(graphName);
             
             const response = await fetch(`http://localhost:4000/api/graphs/${graphName}`);
             if (!response.ok) {
@@ -58,15 +66,15 @@ const ActionInterfacePage = () => {
 
             const result = await response.json();
             
-            // Use functional update to avoid stale closures
-            setSelectedGraph(result);
+            // Update both the active graph and the selected element
+            setActiveGraph(result);
+            setSelectedElement({
+                type: 'graph',
+                data: result
+            });
         } catch (error) {
             console.error('Error fetching data', error);
-            // Reset loading state on error
-            setSelectedGraph(prev => ({
-                ...prev,
-                isLoading: false
-            }));
+            setActiveGraphId(null);
         }
     };
 
@@ -93,9 +101,15 @@ const ActionInterfacePage = () => {
                 )
             );
     
-            // Only update selectedGraph if it's still the same graph we're editing
-            setSelectedGraph(prev => 
-                prev && prev.graph_name === updatedGraph.graph_name ? updatedGraph : prev
+            // Update both states
+            setActiveGraph(updatedGraph);
+            
+            // Only update selectedElement if it's still showing the graph
+            setSelectedElement(prev => 
+                prev && prev.type === 'graph' && prev.data.graph_name === updatedGraph.graph_name ? {
+                    type: 'graph',
+                    data: updatedGraph
+                } : prev
             );
     
             return updatedGraph;
@@ -126,28 +140,44 @@ const ActionInterfacePage = () => {
         }
     };
 
-    // Kaarel' previous. should be merged with handleActionSelect 
-    const handleNodeSelect = (action) => {
-        setSelectedNode(action);
+    const handleNodeSelect = (nodeData) => {
+        if (!nodeData) {
+            setActiveNodeId(null);
+            // If no node is selected, show the graph instead
+            if (activeGraphId) {
+                const graph = graphs.find(g => g.graph_name === activeGraphId);
+                setSelectedElement({
+                    type: 'graph',
+                    data: graph
+                });
+            }
+            return;
+        }
+        
+        setActiveNodeId(nodeData.instance_id);
+        // Only update what's shown in the info panel, not the active graph
+        setSelectedElement({
+            type: 'node',
+            data: nodeData
+        });
     };
 
     const handleActionSelect = async (actionName) => {
         console.log('clicked action!', actionName);
 
-        if (selectedNode && selectedNode.action_name === actionName) {
-            return;
-        }
-
+        // Clear node selection
+        setActiveNodeId(null);
+        nodeEditorRef.current?.clearActiveNode();
+        
         // Find and set the selected action
         const action = actions.find(action => action.name === actionName);
-        setSelectedAction(action);
-
-        // TODO: Remove this
-        //setSelectedGraph(null);
-        //graphListRef.current?.clearActiveGraph();
-
-        setSelectedNode(null);
-        nodeEditorRef.current?.clearActiveNode(); // TODO: Remove blue circle around the node. React flow node still applies .selected class for the element. 
+        if (!action) return;
+        
+        setActiveActionId(actionName);
+        setSelectedElement({
+            type: 'action',
+            data: action
+        });
     };
 
     const handleNewGraph = async () => {
@@ -174,9 +204,9 @@ const ActionInterfacePage = () => {
 
             // Update frontend state after successful backend creation
             setGraphs([...graphs, newGraph]);
-            setSelectedGraph(newGraph);
-            setSelectedAction(null);
-            setSelectedNode(null);
+            setActiveGraphId(newGraph.graph_name);
+            setActiveActionId(null);
+            setActiveNodeId(null);
 
             // Set the new graph as active in GraphListPanel
             graphListRef.current?.setActiveGraph(newGraph);
@@ -195,14 +225,35 @@ const ActionInterfacePage = () => {
             parameters: {}
         };
 
-        setSelectedAction(newAction);
+        setActions([...actions, newAction]);
+        setActiveActionId(newAction.name);
         setIsNewAction(true);
-        setSelectedGraph(null);
-        setSelectedNode(null);
+        setSelectedElement({
+            type: 'action',
+            data: newAction
+        });
     };
 
-    const handleActionGenerated = () => {
+    const handleActionGenerated = (generatedAction) => {
         setIsNewAction(false);
+        
+        // If we have the generated action data, update it in the UI
+        if (generatedAction) {
+            // Update actions list (this will be handled by socket in real implementation)
+            // For immediate feedback, we can update locally:
+            const updatedActions = [...actions, generatedAction];
+            setActions(updatedActions);
+            
+            // Select the newly generated action
+            setActiveActionId(generatedAction.name);
+            actionListRef.current?.setActiveAction(generatedAction);
+            
+            // Update the selected element
+            setSelectedElement({
+                type: 'action',
+                data: generatedAction
+            });
+        }
     };
 
     useEffect(() => {
@@ -229,23 +280,29 @@ const ActionInterfacePage = () => {
 
     // Update the rendered graph when the state changes
     useEffect(() => {
-        if (graphs && graphs.length > 0 && !selectedGraph) {
-            handleGraphSelect(graphs[0].graph_name);
-            graphListRef.current?.setActiveGraph(graphs[0]);
+        if (graphs && graphs.length > 0 && !activeGraphId) {
+            const firstGraph = graphs[0];
+            setActiveGraphId(firstGraph.graph_name);
+            setActiveGraph(firstGraph);
         }
 
-        if (graphs && selectedGraph) {
+        if (graphs && activeGraphId) {
             // Store the current graph name to avoid race conditions
-            const currentGraphName = selectedGraph.graph_name;
+            const currentGraphName = activeGraphId;
             
             // Find the updated graph data
             const updatedGraph = graphs.find(graph => graph.graph_name === currentGraphName);
             
             if (updatedGraph) {
-                // Only update if we're still looking at the same graph
-                // Use a functional update to avoid stale closures
-                setSelectedGraph(prev => 
-                    prev && prev.graph_name === currentGraphName ? updatedGraph : prev
+                // Update the active graph
+                setActiveGraph(updatedGraph);
+                
+                // Only update selectedElement if it's showing the graph
+                setSelectedElement(prev => 
+                    prev && prev.type === 'graph' && prev.data.graph_name === currentGraphName ? {
+                        type: 'graph',
+                        data: updatedGraph
+                    } : prev
                 );
             }
         }
@@ -256,8 +313,8 @@ const ActionInterfacePage = () => {
             <div className="graph-action-list-panel-div">
                 <div className="graph-list-panel">
                     <GraphListPanel
-                        ref={graphListRef}
-                        graphsIn={graphs}
+                        graphs={graphs}
+                        activeGraphId={activeGraphId}
                         onGraphSelect={handleGraphSelect}
                         onStartStopClick={handleStartStopClick}
                         runtimeEnabled={runtimeEnabled}
@@ -267,9 +324,10 @@ const ActionInterfacePage = () => {
 
                 <div className="action-list-panel">
                     <ActionListPanel
-                        ref={actionListRef}
-                        actionsIn={actions}
+                        actions={actions}
+                        activeActionId={activeActionId}
                         onActionSelect={handleActionSelect}
+                        selectedGraph={selectedElement.type === 'graph' ? selectedElement.data : null}
                         onNewAction={handleNewAction}
                     />
                 </div>
@@ -278,15 +336,13 @@ const ActionInterfacePage = () => {
             <div className="node-editor-panel">
                 <NodeEditorPanel
                     ref={nodeEditorRef}
-                    graphDataIn={selectedGraph}
+                    graphDataIn={activeGraph}
                     onUpdateGraph={handleGetCurrentGraph}
                     onNodeSelect={handleNodeSelect}/>
             </div>
             <div className="graph-info-panel">
                 <GraphInfoPanel
-                    graphDataIn={selectedGraph}
-                    nodeDataIn={selectedNode}
-                    actionDataIn={selectedAction}
+                    selectedElement={selectedElement}
                     isNewAction={isNewAction}
                     onActionGenerated={handleActionGenerated}
                 />

@@ -370,13 +370,57 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
       onUpdateGraph(updatedGraph);
       const wasSelectedNodeDeleted = deletedNodes.some(
         node => node.id === selectedNodeId
-    );
+      );
     
-    if (wasSelectedNodeDeleted) {
+      if (wasSelectedNodeDeleted) {
         setSelectedNodeId(null);
         onNodeSelect(null);
-    }
-    
+      }
+    },
+    [activeGraph, onUpdateGraph]
+  );
+
+  // Add a new method to handle edge deletions
+  const onEdgesDelete = useCallback(
+    (deletedEdges) => {
+      console.log("Edges deleted:", deletedEdges);
+      
+      if (!activeGraph) return;
+      
+      // Create updated graph without the deleted edges
+      const updatedGraph = produce(activeGraph, draft => {
+        deletedEdges.forEach(deletedEdge => {
+          // Find source and target actions
+          const sourceAction = draft.actions.find(
+            action => `${action.name}_${action.instance_id}` === deletedEdge.source
+          );
+          const targetAction = draft.actions.find(
+            action => `${action.name}_${action.instance_id}` === deletedEdge.target
+          );
+          
+          if (sourceAction && targetAction) {
+            // Remove child from source action
+            if (sourceAction.children) {
+              sourceAction.children = sourceAction.children.filter(
+                child => !(child.name === targetAction.name && 
+                          child.instance_id === targetAction.instance_id)
+              );
+            }
+            
+            // Remove parent from target action
+            if (targetAction.parents) {
+              targetAction.parents = targetAction.parents.filter(
+                parent => !(parent.name === sourceAction.name && 
+                           parent.instance_id === sourceAction.instance_id)
+              );
+            }
+          }
+        });
+      });
+      
+      // Update local state and backend
+      setActiveGraph(updatedGraph);
+      onUpdateGraph(updatedGraph);
     },
     [activeGraph, onUpdateGraph]
   );
@@ -388,6 +432,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodesDelete={onNodesDelete}
+        onEdgesDelete={onEdgesDelete}
         onConnect={onConnect}
         onInit={setRfInstance}
         nodeTypes={nodeTypes}

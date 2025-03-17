@@ -44,6 +44,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     background-color: #bebebe; 
     padding: 12px;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;

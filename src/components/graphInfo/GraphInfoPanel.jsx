@@ -7,7 +7,7 @@ import './GraphInfoPanel.css';
 // Register the JSON language
 SyntaxHighlighter.registerLanguage('json', json);
 
-const GraphInfoPanel = ({ graphDataIn, nodeDataIn, actionDataIn, isNewAction, onActionGenerated }) => {
+const GraphInfoPanel = ({ selectedElement, isNewAction, onActionGenerated }) => {
   const [actionData, setActionData] = useState({
     name: '',
     description: '',
@@ -16,11 +16,11 @@ const GraphInfoPanel = ({ graphDataIn, nodeDataIn, actionDataIn, isNewAction, on
   const [generationSuccess, setGenerationSuccess] = useState(false);
 
   useEffect(() => {
-    if (actionDataIn) {
-      setActionData(actionDataIn);
+    if (selectedElement.type === 'action' && selectedElement.data) {
+      setActionData(selectedElement.data);
       setGenerationSuccess(false); // Reset success state when new action is selected
     }
-  }, [actionDataIn]);
+  }, [selectedElement]);
 
   const handleGenerateAction = async () => {
     try {
@@ -40,14 +40,14 @@ const GraphInfoPanel = ({ graphDataIn, nodeDataIn, actionDataIn, isNewAction, on
       console.log('Action generated successfully:', result);
       setGenerationSuccess(true);
       if (onActionGenerated) {
-        onActionGenerated();
+        onActionGenerated(); // Pass the generated action back
       }
     } catch (error) {
       console.error('Error generating action:', error);
     }
   };
 
-  if (!graphDataIn && !nodeDataIn && !actionDataIn) {
+  if (!selectedElement.data) {
     return (
       <div className="graph-info-container">
         <h2>Details</h2>
@@ -56,18 +56,19 @@ const GraphInfoPanel = ({ graphDataIn, nodeDataIn, actionDataIn, isNewAction, on
     );
   }
 
-  // Determine which data to show and what title to display
-  const getDisplayData = () => {
-    if (nodeDataIn) return { title: 'Node Details', data: nodeDataIn };
-    if (actionDataIn) return { title: 'Action Details', data: actionDataIn };
-    return { title: 'Graph Details', data: graphDataIn };
+  // Determine title based on the type
+  const getTitle = () => {
+    switch (selectedElement.type) {
+      case 'graph': return 'Graph Details';
+      case 'node': return 'Node Details';
+      case 'action': return 'Action Details';
+      default: return 'Details';
+    }
   };
-
-  const { title, data } = getDisplayData();
 
   return (
     <div className="graph-info-container">
-      <h2>{title}</h2>
+      <h2>{getTitle()}</h2>
       <SyntaxHighlighter 
         language="json" 
         style={vs2015}
@@ -79,9 +80,9 @@ const GraphInfoPanel = ({ graphDataIn, nodeDataIn, actionDataIn, isNewAction, on
           boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
         }}
       >
-        {JSON.stringify(data, null, 2)}
+        {JSON.stringify(selectedElement.data, null, 2)}
       </SyntaxHighlighter>
-      {isNewAction && !generationSuccess && (
+      {isNewAction && selectedElement.type === 'action' && !generationSuccess && (
         <button 
           className="generate-button"
           onClick={handleGenerateAction}
