@@ -59,7 +59,7 @@ def create_graph():
     global graphs
     try:
         graph_data = request.json
-        graph_data['status'] = 'generated'
+        graph_data['gui_attributes']['status'] = 'generated'
 
         print (f'Creating graph: {graph_data}')
 

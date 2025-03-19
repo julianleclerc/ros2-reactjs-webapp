@@ -216,7 +216,9 @@ const ActionInterfacePage = () => {
             name: `NewAction_${Date.now()}`,
             description: "Newly created action",
             input_parameters: {},
-            status: 'draft'
+            gui_attributes: {
+                status: 'draft'  // Move status to gui_attributes
+            }
         };
 
         setActions([...actions, newAction]);
@@ -228,11 +230,15 @@ const ActionInterfacePage = () => {
     };
 
     const handleActionGenerated = () => {
-        if (selectedElement.type === 'action' && selectedElement.data.status === 'draft') {
-            // Ensure the generated action has the correct status
+        if (selectedElement.type === 'action' && 
+            selectedElement.data.gui_attributes?.status === 'draft') {
+            // Ensure the generated action has the correct status in gui_attributes
             const updatedAction = {
                 ...selectedElement.data,
-                status: 'package' // Mark as generated
+                gui_attributes: {
+                    ...selectedElement.data.gui_attributes,
+                    status: 'package' // Mark as generated
+                }
             };
             
             // Update the actions list by replacing the draft action with the generated one

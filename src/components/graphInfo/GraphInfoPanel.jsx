@@ -65,7 +65,9 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
     name: '',
     description: '',
     input_parameters: {},
-    status: ''
+    gui_attributes: {
+        status: ''
+    }
   });
   const [generationSuccess, setGenerationSuccess] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -212,7 +214,11 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
       // Make sure we're using the most up-to-date action data with edited name
       const actionToGenerate = {
         ...actionData,
-        name: editedName
+        name: editedName,
+        gui_attributes: {
+          ...actionData.gui_attributes,
+          status: 'package'
+        }
       };
 
       const response = await fetch('http://localhost:4000/api/generate-action', {
@@ -231,10 +237,13 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
       console.log('Action generated successfully:', result);
       setGenerationSuccess(true);
       
-      // Add status to the result if it doesn't already have one
+      // Ensure the result follows the new structure
       const generatedAction = {
         ...result,
-        status: 'package'
+        gui_attributes: {
+          ...result.gui_attributes,
+          status: 'package'
+        }
       };
       
       if (onActionGenerated) {
@@ -246,8 +255,9 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
   };
 
   const handleNameEdit = () => {
-    if (selectedElement.type === 'action' && selectedElement.data.status === 'draft') {
-      setIsEditingName(true);
+    if (selectedElement.type === 'action' && 
+        selectedElement.data.gui_attributes?.status === 'draft') {
+        setIsEditingName(true);
     }
   };
 
@@ -474,14 +484,14 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
         
         {/* Show status badge if it's an action */}
         {selectedElement.type === 'action' && (
-          <div className={`status-badge ${selectedElement.data.status || 'unknown'}`}>
-            {selectedElement.data.status === 'draft' ? 'Draft' : 
-             selectedElement.data.status === 'package' ? 'Package' : 'Package'}
+          <div className={`status-badge ${selectedElement.data.gui_attributes?.status || 'unknown'}`}>
+            {selectedElement.data.gui_attributes?.status === 'draft' ? 'Draft' : 
+             selectedElement.data.gui_attributes?.status === 'package' ? 'Package' : 'Package'}
           </div>
         )}
         
         {/* Name editing for draft actions */}
-        {selectedElement.type === 'action' && selectedElement.data.status === 'draft' && (
+        {selectedElement.type === 'action' && selectedElement.data.gui_attributes?.status === 'draft' && (
           <div className="action-name-editor">
             {isEditingName ? (
               <div className="name-input-container">
@@ -508,7 +518,7 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
         )}
 
         {/* Parameter Addition for Draft Actions */}
-        {selectedElement.type === 'action' && selectedElement.data.status === 'draft' && (
+        {selectedElement.type === 'action' && selectedElement.data.gui_attributes?.status === 'draft' && (
           <>
             {/* Parameter List for Draft Actions */}
             {Object.keys(actionData.input_parameters).length > 0 && (
@@ -581,7 +591,7 @@ const GraphInfoPanel = ({ selectedElement, onActionGenerated, onActionUpdated })
       
       {/* Only show Generate button for draft actions */}
       {selectedElement.type === 'action' && 
-       selectedElement.data.status === 'draft' && 
+       selectedElement.data.gui_attributes?.status === 'draft' && 
        !generationSuccess && (
         <button 
           className="generate-button"
