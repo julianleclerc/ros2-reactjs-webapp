@@ -12,19 +12,16 @@ const ActionInterfacePage = () => {
     const [actions, setActions] = useState(null);
     const [runtimeEnabled, setRuntimeEnabled] = useState(false);
     
-    // Add a separate state for the active graph
-    const [activeGraph, setActiveGraph] = useState(null);
-    
+    // Track active IDs for visual selection in panels
+    const [activeGraphId, setActiveGraphId] = useState(null);
+    const [activeActionId, setActiveActionId] = useState(null);
+    const [activeNodeId, setActiveNodeId] = useState(null);
+
     // Selection state - for info panel only
     const [selectedElement, setSelectedElement] = useState({
         type: null, // 'graph', 'node', 'action'
         data: null
     });
-    
-    // Track active IDs for visual selection in panels
-    const [activeGraphId, setActiveGraphId] = useState(null);
-    const [activeActionId, setActiveActionId] = useState(null);
-    const [activeNodeId, setActiveNodeId] = useState(null);
     
     const [isNewAction, setIsNewAction] = useState(false);
     
@@ -66,8 +63,6 @@ const ActionInterfacePage = () => {
 
             const result = await response.json();
             
-            // Update both the active graph and the selected element
-            setActiveGraph(result);
             setSelectedElement({
                 type: 'graph',
                 data: result
@@ -101,8 +96,6 @@ const ActionInterfacePage = () => {
                 )
             );
     
-            // Update both states
-            setActiveGraph(updatedGraph);
             
             // Only update selectedElement if it's still showing the graph
             setSelectedElement(prev => 
@@ -222,38 +215,56 @@ const ActionInterfacePage = () => {
         const newAction = {
             name: `NewAction_${Date.now()}`,
             description: "Newly created action",
-            parameters: {}
+            parameters: {},
+            status: 'draft'
         };
 
         setActions([...actions, newAction]);
         setActiveActionId(newAction.name);
-        setIsNewAction(true);
         setSelectedElement({
             type: 'action',
             data: newAction
         });
     };
 
-    const handleActionGenerated = (generatedAction) => {
-        setIsNewAction(false);
-        
-        // If we have the generated action data, update it in the UI
-        if (generatedAction) {
-            // Update actions list (this will be handled by socket in real implementation)
-            // For immediate feedback, we can update locally:
-            const updatedActions = [...actions, generatedAction];
-            setActions(updatedActions);
+    const handleActionGenerated = () => {
+        if (selectedElement.type === 'action' && selectedElement.data.status === 'draft') {
+            // Ensure the generated action has the correct status
+            const updatedAction = {
+                ...selectedElement.data,
+                status: 'package' // Mark as generated
+            };
             
-            // Select the newly generated action
-            setActiveActionId(generatedAction.name);
-            actionListRef.current?.setActiveAction(generatedAction);
+            // Update the actions list by replacing the draft action with the generated one
+            const updatedActions = actions.map(action => 
+                action.name === updatedAction.name ? updatedAction : action
+            );
+            
+            setActions(updatedActions);
+            setActiveActionId(updatedAction.name);
             
             // Update the selected element
             setSelectedElement({
                 type: 'action',
-                data: generatedAction
+                data: updatedAction
             });
         }
+    };
+
+    const handleActionUpdated = (updatedAction) => {
+        // Update the actions list with the updated action
+        const updatedActions = actions.map(action => 
+            action.name === selectedElement.data.name ? updatedAction : action
+        );
+        
+        setActions(updatedActions);
+        setActiveActionId(updatedAction.name);
+        
+        // Update the selected element
+        setSelectedElement({
+            type: 'action',
+            data: updatedAction
+        });
     };
 
     useEffect(() => {
@@ -283,7 +294,6 @@ const ActionInterfacePage = () => {
         if (graphs && graphs.length > 0 && !activeGraphId) {
             const firstGraph = graphs[0];
             setActiveGraphId(firstGraph.graph_name);
-            setActiveGraph(firstGraph);
         }
 
         if (graphs && activeGraphId) {
@@ -294,8 +304,6 @@ const ActionInterfacePage = () => {
             const updatedGraph = graphs.find(graph => graph.graph_name === currentGraphName);
             
             if (updatedGraph) {
-                // Update the active graph
-                setActiveGraph(updatedGraph);
                 
                 // Only update selectedElement if it's showing the graph
                 setSelectedElement(prev => 
@@ -336,7 +344,7 @@ const ActionInterfacePage = () => {
             <div className="node-editor-panel">
                 <NodeEditorPanel
                     ref={nodeEditorRef}
-                    graphDataIn={activeGraph}
+                    graphDataIn={graphs?.find(graph => graph.graph_name === activeGraphId)}
                     onUpdateGraph={handleGetCurrentGraph}
                     onNodeSelect={handleNodeSelect}/>
             </div>
@@ -345,6 +353,7 @@ const ActionInterfacePage = () => {
                     selectedElement={selectedElement}
                     isNewAction={isNewAction}
                     onActionGenerated={handleActionGenerated}
+                    onActionUpdated={handleActionUpdated}
                 />
             </div>
         </div>

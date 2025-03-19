@@ -425,6 +425,40 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
     [activeGraph, onUpdateGraph]
   );
 
+  const onNodeDragStop = useCallback(
+    (event, node) => {
+      console.log("Node dragged and stopped:", node);
+      
+      if (!activeGraph) return;
+      
+      // Create updated graph with the new node position
+      const updatedGraph = produce(activeGraph, draft => {
+        // Find the action that corresponds to this node
+        const actionIndex = draft.actions.findIndex(
+          action => action.name === node.data.title && 
+                   action.instance_id.toString() === node.data.instance_id.toString()
+        );
+        
+        if (actionIndex !== -1) {
+          // Update the position in gui_attributes
+          if (!draft.actions[actionIndex].gui_attributes) {
+            draft.actions[actionIndex].gui_attributes = {};
+          }
+          
+          draft.actions[actionIndex].gui_attributes.position = {
+            x: node.position.x,
+            y: node.position.y
+          };
+        }
+      });
+      
+      // Update local state and backend
+      setActiveGraph(updatedGraph);
+      onUpdateGraph(updatedGraph);
+    },
+    [activeGraph, onUpdateGraph]
+  );
+
   return (
       <ReactFlow
         nodes={nodes}
@@ -438,6 +472,7 @@ const NodeEditorPanel = forwardRef(({ graphDataIn, onUpdateGraph, onNodeSelect }
         nodeTypes={nodeTypes}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onNodeDragStop={onNodeDragStop}
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB"}}

@@ -59,9 +59,14 @@ def create_graph():
     global graphs
     try:
         graph_data = request.json
+        graph_data['status'] = 'generated'
+
+        print (f'Creating graph: {graph_data}')
+
         graph_name = graph_data['graph_name']
         graphs[graph_name] = graph_data
-        
+
+        #add a new field 'status' and set it as 'generated'
         graphs_list = list(graphs.values())
         socketio.emit('graphs', graphs_list)
         
@@ -74,9 +79,10 @@ def generate_action():
     global actions
     try:
         action_data = request.json
-        print (f'Generating action: {action_data}')
-        
         action_name = action_data['name']
+        action_data['status'] = 'package'
+        print (f'Generating action: {action_data}')
+
         actions[action_name] = action_data
         
         actions_list = list(actions.values())
