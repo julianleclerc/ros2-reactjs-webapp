@@ -215,7 +215,7 @@ const ActionInterfacePage = () => {
         const newAction = {
             name: `NewAction_${Date.now()}`,
             description: "Newly created action",
-            parameters: {},
+            input_parameters: {},
             status: 'draft'
         };
 
@@ -252,6 +252,8 @@ const ActionInterfacePage = () => {
     };
 
     const handleActionUpdated = (updatedAction) => {
+        console.log('Action Updated in Parent:', updatedAction);
+        
         // Update the actions list with the updated action
         const updatedActions = actions.map(action => 
             action.name === selectedElement.data.name ? updatedAction : action
