@@ -6,15 +6,13 @@ import io from "socket.io-client";
 const socket = io("http://localhost:4000");
 
 const ChatPanel = () => {
-  // The full chat log is maintained from the backend.
   const [messages, setMessages] = useState({});
-  // Instead of a single active tab, we now use an array for multiple selections.
   const [activeTabs, setActiveTabs] = useState([]);
   const [input, setInput] = useState("");
+  const [actorsAwaitingResponse, setActorsAwaitingResponse] = useState([]);
 
   // Ref for auto-scrolling the chat log.
   const chatLogRef = useRef(null);
-
 
   // on page refresh
   const refreshChatInterface = async () => {
@@ -73,7 +71,23 @@ const ChatPanel = () => {
   useEffect(() => {
     socket.on("chat_log", (chatLog) => {
       setMessages(chatLog);
+      
+      // Check for any "request" type messages and update UI
+      const updatedAwaitingActors = [];
+      Object.entries(chatLog).forEach(([actor, messages]) => {
+        // Look through recent messages for request types
+        const recentMessages = messages.slice(-5);
+        for (const message of recentMessages) {
+          if (message.length > 3 && message[3] === "request") {
+            updatedAwaitingActors.push(actor);
+            break;
+          }
+        }
+      });
+      
+      setActorsAwaitingResponse(updatedAwaitingActors);
     });
+    
     return () => {
       socket.off("chat_log");
     };
@@ -96,6 +110,7 @@ const ChatPanel = () => {
       alert("Please select at least one actor to send the message.");
       return;
     }
+    
     const request = {
       actor: activeTabs, // Send to all selected actors
       message: input.trim(),
@@ -109,6 +124,7 @@ const ChatPanel = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
       });
+      
       if (!response.ok) {
         console.error("Failed to send message");
       }
@@ -190,7 +206,23 @@ const ChatPanel = () => {
     combinedMessages.sort((a, b) => new Date(a[0]) - new Date(b[0]));
   }
 
-  
+
+  // Helper function to get tab class including response-waiting state 
+  const getTabClass = (actor) => {
+    let className = "tab-button";
+    
+    // First check if it's awaiting response (higher priority)
+    if (actorsAwaitingResponse.includes(actor)) {
+      className += " awaiting-response-tab";
+    }
+    
+    // Then check if it's active
+    if (activeTabs.includes(actor)) {
+      className += " active-tab";
+    }
+    
+    return className;
+  };
 
   return (
     <div className="chat-sub-panel">
@@ -204,10 +236,13 @@ const ChatPanel = () => {
             {Object.keys(messages).map((actor) => (
               <button
                 key={actor}
-                className={`tab-button ${activeTabs.includes(actor) ? "active-tab" : ""}`}
+                className={getTabClass(actor)}
                 onClick={() => handleToggleTab(actor)}
               >
                 {actor}
+                {actorsAwaitingResponse.includes(actor) && (
+                  <span className="awaiting-response-indicator">⏳</span>
+                )}
               </button>
             ))}
           </div>

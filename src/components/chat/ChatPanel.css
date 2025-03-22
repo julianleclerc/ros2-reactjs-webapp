@@ -190,3 +190,66 @@
     font-weight: bold;
     margin-top: 10px;
 }
+
+/* ------------------------- Error Handling ------------------------- */
+
+/* Styling for tabs that are awaiting response */
+.awaiting-response-tab {
+    background-color: #c67700;
+    border: 1px solid #ffeeba;
+    position: relative;
+  }
+  
+  .active-tab.awaiting-response-tab {
+    background-color: #b65c00;
+  }
+  
+  .awaiting-response-indicator {
+    margin-left: 5px;
+    font-size: 0.8em;
+  }
+  
+  /* Message styling based on message type */
+  .chat-message.request-type {
+    background-color: #f8f9fa;
+    border-left: 3px solid #6c757d;
+  }
+  
+  .chat-message.response-type {
+    background-color: #e9f7ef;
+    border-left: 3px solid #27ae60;
+  }
+  
+  .chat-message.info-type {
+    background-color: #e3f2fd;
+    border-left: 3px solid #2196f3;
+  }
+  
+  .chat-message.error-type {
+    background-color: #ffebee;
+    border-left: 3px solid #f44336;
+  }
+  
+  .chat-message.debug-type {
+    background-color: #f3e5f5;
+    border-left: 3px solid #9c27b0;
+    font-size: 0.9em;
+    color: #777;
+  }
+
+  /* Styling for tabs that are awaiting response */
+.awaiting-response-tab {
+    background-color: #e67e00 !important; /* Orange background */
+    border: 1px solid #ffeeba;
+    position: relative;
+  }
+  
+  .active-tab.awaiting-response-tab {
+    background-color: #d36c00 !important;
+    border: 1px solid #ffdf89;
+  }
+  
+  .awaiting-response-indicator {
+    margin-left: 5px;
+    font-size: 0.8em;
+  }

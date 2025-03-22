@@ -25,6 +25,9 @@ class RosInterface(Node):
         super().__init__('action_designer_runtime')
         self.graph_feedback_cb_parent = graph_feedback_cb_parent
         self.chat_feedback_cb_parent = chat_feedback_cb_parent
+        
+        # Track actors with pending requests that need responses
+        self.actors_awaiting_response = set()
 
         ### ACTION INTERFACE TOPICS
         self.umrf_graph_start_pub = self.create_publisher(UmrfGraphStart, 'umrf_graph_start', 10)
@@ -34,7 +37,7 @@ class RosInterface(Node):
         self.client_graph_get = self.create_client(UmrfGraphGet, 'umrf_graph_get')
 
         ### CHAT INTERFACE TOPICS
-        self.chat_interface_user_input_pub = self.create_publisher(String, 'chat_interface_user_input', 10)
+        self.chat_interface_input_pub = self.create_publisher(String, 'chat_interface_input', 10)
         self.chat_interface_feedback_sub = self.create_subscription(
             String, 'chat_interface_feedback', self.handle_chat_interface_feedback, 10)
 
@@ -66,16 +69,74 @@ class RosInterface(Node):
         self.graph_feedback_cb_parent(msg.actor, msg.history)
 
     ### Chat Interface Methods
-    def send_chat_message(self, msg):
-        self.get_logger().info(f"[DEBUG] handle_chat_input: Received chat input: {msg}")
-        response_msg = String()
-        response_msg.data = msg
-        self.chat_interface_user_input_pub.publish(response_msg)
+    def send_chat_message(self, msg_str):
+        self.get_logger().info(f"[DEBUG] handle_chat_input: Received chat input: {msg_str}")
+        
+        # Parse the message
+        try:
+            msg_data = json.loads(msg_str)
+            targets = msg_data.get("targets", [])
+            message = msg_data.get("message", "")
+            
+            # Check if any targets are awaiting a response
+            # If they are, set the type to "response", otherwise use "request"
+            awaiting_response = any(target in self.actors_awaiting_response for target in targets)
+            
+            if awaiting_response:
+                # Set message type to "response" for actors awaiting a response
+                msg_data["type"] = "response"
+                # Remove the actors from the awaiting_response set
+                for target in targets:
+                    if target in self.actors_awaiting_response:
+                        self.actors_awaiting_response.remove(target)
+            else:
+                # Set message type to "request" by default
+                msg_data["type"] = "request"
+                
+            # Convert back to JSON string
+            updated_msg_str = json.dumps(msg_data)
+            
+            # Publish the message
+            response_msg = String()
+            response_msg.data = updated_msg_str
+            self.chat_interface_input_pub.publish(response_msg)
+            
+            self.get_logger().info(f"[DEBUG] Published message with type: {msg_data['type']}")
+            
+        except json.JSONDecodeError:
+            self.get_logger().error(f"[ERROR] Failed to parse JSON message: {msg_str}")
+            # Fallback to publishing the original message
+            response_msg = String()
+            response_msg.data = msg_str
+            self.chat_interface_input_pub.publish(response_msg)
 
     def handle_chat_interface_feedback(self, msg):
         self.get_logger().info(f"[DEBUG] handle_chat_interface_feedback: Received chat input: {msg}")
         data = msg.data
-        # Forward the received chat message to the Flask/Socket.IO callback.
+        
+        try:
+            # Parse the feedback message
+            feedback_data = json.loads(data)
+            message_type = feedback_data.get("type", "")
+            targets = feedback_data.get("targets", [])
+            
+            # If the message type is "request", add the targets to the awaiting_response set
+            if message_type == "request":
+                for target in targets:
+                    self.actors_awaiting_response.add(target)
+                self.get_logger().info(f"[DEBUG] Added targets to awaiting_response: {targets}")
+            
+            # If the message type is "info" or "error", remove the targets from the awaiting_response set
+            elif message_type in ["info", "error"]:
+                for target in targets:
+                    if target in self.actors_awaiting_response:
+                        self.actors_awaiting_response.remove(target)
+                self.get_logger().info(f"[DEBUG] Removed targets from awaiting_response due to {message_type}: {targets}")
+                
+        except json.JSONDecodeError:
+            self.get_logger().error(f"[ERROR] Failed to parse JSON feedback message: {data}")
+        
+        # Forward the received chat message to the Flask/Socket.IO callback
         self.chat_feedback_cb_parent(data)
 
 def run_ros_interface(graph_feedback_callback, chat_feedback_callback):

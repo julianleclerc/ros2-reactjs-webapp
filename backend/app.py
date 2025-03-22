@@ -84,11 +84,11 @@ def graph_feedback_callback(actor, graphs_in):
 
 ###### CHAT
 chat_log = {}
+request_response_tracking = {}
 
 def get_current_timestamp():
     """Return current UTC time in ISO format."""
     return datetime.datetime.utcnow().isoformat() + "Z"
-
 
 @app.route('/send_message', methods=['POST'])
 def http_send_message():
@@ -107,7 +107,11 @@ def http_send_message():
 
     # Check if ri_node is available and the message is not empty.
     if ri_node and message:
-        ros_message = json.dumps({"targets": actor_list, "message": message})
+        ros_message = json.dumps({
+            "targets": actor_list, 
+            "message": message
+        })
+        
         ri_node.send_chat_message(ros_message)
 
         # Log a feedback message.
@@ -137,20 +141,29 @@ def chat_feedback_callback(message):
     It parses the message, updates the chat_log, and emits the full log.
     """
     print(f"[DEBUG] In chat_feedback_callback with message: {message}")
-    data = json.loads(message)
+    
+    try:
+        data = json.loads(message)
 
-    actor_list = data.get("targets")
-    current_time = get_current_timestamp()
-    msg = data.get("message")
-    for actor in actor_list:
-        # Use the actor's identifier as the user.
-        user = str(actor)
-        if actor not in chat_log:
-            chat_log[actor] = []
-        chat_log[actor].append([current_time, user, msg])
-
-    socketio.emit('chat_log', chat_log)
-    print("[DEBUG] Emitted chat_log event")
+        actor_list = data.get("targets", [])
+        current_time = get_current_timestamp()
+        msg = data.get("message", "")
+        msg_type = data.get("type", "")
+        
+        print(f"[DEBUG] Received message with type: {msg_type} for targets: {actor_list}")
+        
+        for actor in actor_list:
+            # Use the actor's identifier as the user.
+            user = str(actor)
+            if actor not in chat_log:
+                chat_log[actor] = []
+            chat_log[actor].append([current_time, user, msg])
+        
+        socketio.emit('chat_log', chat_log)
+        print("[DEBUG] Emitted chat_log event")
+        
+    except json.JSONDecodeError:
+        print(f"[ERROR] Failed to parse JSON message: {message}")
 
 @app.route('/add_new_actor', methods=['POST'])
 def add_new_actor_to_log():
