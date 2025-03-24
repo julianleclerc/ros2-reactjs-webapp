@@ -1,27 +1,8 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React from 'react';
 import './GraphListPanel.css'; // Import the CSS file
 
-const GraphListPanel = forwardRef(({ graphsIn, onGraphSelect, onStartStopClick, onNewGraph, runtimeEnabled }, ref) => {
-    const [graphs, setGraphs] = useState([]);
-    const [activeGraph, setActiveGraph] = useState(null);
-    
-    useEffect(() => {
-        if (graphsIn) {
-            setGraphs(graphsIn)
-        }
-    }, [graphsIn]);
-
-    useImperativeHandle(ref, () => ({
-        clearActiveGraph: () => {
-            setActiveGraph(null);
-        },
-        setActiveGraph: (graph) => {
-            setActiveGraph(graph);
-        }
-    }));
-
+const GraphListPanel = ({ graphs, activeGraphId, onGraphSelect, onStartStopClick, onNewGraph, runtimeEnabled }) => {
     const handleGraphSelectClick = (graph) => {
-        setActiveGraph(graph);
         onGraphSelect(graph.graph_name);
     };
 
@@ -33,10 +14,10 @@ const GraphListPanel = forwardRef(({ graphsIn, onGraphSelect, onStartStopClick, 
         <div>
             <div className="buttons-column">
                 <h2>Graphs</h2>
-                {graphs.map((graph, index) => (
+                {graphs && graphs.map((graph, index) => (
                     <div className="buttons-row" key={index}>
                         <button
-                            className={`text-button ${activeGraph?.graph_name === graph.graph_name ? 'active' : ''}`}
+                            className={`text-button ${activeGraphId === graph.graph_name ? 'active' : ''}`}
                             onClick={() => handleGraphSelectClick(graph)}
                         >
                             {graph.graph_name}
@@ -76,6 +57,6 @@ const GraphListPanel = forwardRef(({ graphsIn, onGraphSelect, onStartStopClick, 
             </div>
         </div>
     );
-});
+};
 
 export default GraphListPanel;

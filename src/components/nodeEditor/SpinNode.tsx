@@ -14,6 +14,11 @@ export default memo(({ data }: NodeProps<Node<SpinNodeData>>) => {
       {data.actor && <div className="actor-label">{data.actor}</div>}
 
       <div className={`wrapper ${data.state ? data.state : ""}`}>
+        <Handle 
+          type="target" 
+          position={Position.Top} 
+          className="react-flow__handle target" 
+        />
         <div className="inner">
           <div className="body">
             {data.icon && <div className="icon">{data.icon}</div>}
@@ -22,9 +27,12 @@ export default memo(({ data }: NodeProps<Node<SpinNodeData>>) => {
               {data.subline && <div className="subline">{data.subline}</div>}
             </div>
           </div>
-          <Handle type="target" position={Position.Top} />
-          <Handle type="source" position={Position.Bottom} />
         </div>
+        <Handle 
+          type="source" 
+          position={Position.Bottom} 
+          className="react-flow__handle source" 
+        />
       </div>
     </>
   );

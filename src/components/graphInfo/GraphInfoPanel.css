@@ -55,3 +55,232 @@ overflow-y: auto;
     font-style: italic;
     color: #eee;
 }
+
+.generate-button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    margin-top: 10px;
+}
+
+.generate-button:hover {
+    background-color: #218838;
+    transform: scale(1.02);
+}
+
+.success-message {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.status-badge.draft {
+  background-color: #f39c12; /* Orange for draft */
+}
+
+.status-badge.generated {
+  background-color: #2ecc71; /* Green for generated */
+}
+
+.status-badge.unknown {
+  background-color: #2ecc71; /* Green for generated */
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.info-header h2 {
+  margin-right: 10px;
+  margin-bottom: 0;
+}
+
+.action-name-editor {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.name-display {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.name-display:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.action-name {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.edit-icon {
+  margin-left: 8px;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.name-input-container {
+  display: flex;
+  align-items: center;
+}
+
+.name-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #333;
+  color: white;
+  font-size: 16px;
+}
+
+.save-name-button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-name-button:hover {
+  background-color: #45a049;
+}
+
+.parameter-addition-section {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.add-parameter-button {
+  width: 100%;
+  padding: 8px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-parameter-button:hover {
+  background-color: #45a049;
+}
+
+.parameter-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.parameter-select, .parameter-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #333;
+  color: white;
+}
+
+.parameter-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.parameter-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-parameter-button, .cancel-parameter-button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-parameter-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.cancel-parameter-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.current-parameters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.parameter-chip {
+  display: flex;
+  align-items: center;
+  background-color: #444;
+  color: white;
+  border-radius: 20px;
+  padding: 5px 10px;
+  gap: 8px;
+  max-width: 100%;
+  font-size: 0.9em;
+}
+
+.parameter-name {
+  font-weight: bold;
+  margin-right: 5px;
+  text-transform: capitalize;
+}
+
+.parameter-value {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.remove-parameter-button {
+  background: none;
+  border: none;
+  color: #ff4444;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  margin-left: 5px;
+}
