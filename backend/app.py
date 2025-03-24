@@ -13,6 +13,7 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 socketio = SocketIO(app, cors_allowed_origins="http://localhost:3000")
 
 runtime_enabled = False
+debug_mode = False
 graphs = {}
 ri_node = None  # TODO: ideally the ros node should not be exposed like that
 
@@ -50,10 +51,15 @@ def exec_graph(key):
     else:
         return jsonify({"error": "Graph not found"}), 404
 
+@app.route('/debug_status', methods=['GET'])
+def get_debug_status():
+    return jsonify({"debug_enabled": debug_mode}), 200
+
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
     socketio.emit('runtime_enabled', runtime_enabled)
+    socketio.emit('debug_mode', debug_mode)
     graphs_list = list(graphs.values())
     socketio.emit('graphs', graphs_list)
 
@@ -114,12 +120,13 @@ def http_send_message():
         
         ri_node.send_chat_message(ros_message)
 
-        # Log a feedback message.
-        current_time = get_current_timestamp()
-        feedback_user = "debug"
-        feedback_message = "Message sent"
-        for actor in actor_list:
-            chat_log[actor].append([current_time, feedback_user, feedback_message])
+        # Log a feedback message if debug mode is enabled
+        if debug_mode:
+            current_time = get_current_timestamp()
+            feedback_user = "debug"
+            feedback_message = "Message sent"
+            for actor in actor_list:
+                chat_log[actor].append([current_time, feedback_user, feedback_message])
         
         socketio.emit('chat_log', chat_log)
         return jsonify({"debug": "Message sent"}), 200
@@ -140,7 +147,8 @@ def chat_feedback_callback(message):
     Callback function to handle chat messages from ROS.
     It parses the message, updates the chat_log, and emits the full log.
     """
-    print(f"[DEBUG] In chat_feedback_callback with message: {message}")
+    if debug_mode:
+        print(f"[DEBUG] In chat_feedback_callback with message: {message}")
     
     try:
         data = json.loads(message)
@@ -150,7 +158,8 @@ def chat_feedback_callback(message):
         msg = data.get("message", "")
         msg_type = data.get("type", "")
         
-        print(f"[DEBUG] Received message with type: {msg_type} for targets: {actor_list}")
+        if debug_mode:
+            print(f"[DEBUG] Received message with type: {msg_type} for targets: {actor_list}")
         
         for actor in actor_list:
             # Use the actor's identifier as the user.
@@ -160,7 +169,8 @@ def chat_feedback_callback(message):
             chat_log[actor].append([current_time, user, msg])
         
         socketio.emit('chat_log', chat_log)
-        print("[DEBUG] Emitted chat_log event")
+        if debug_mode:
+            print("[DEBUG] Emitted chat_log event")
         
     except json.JSONDecodeError:
         print(f"[ERROR] Failed to parse JSON message: {message}")
@@ -191,6 +201,7 @@ def add_new_actor_to_log():
 def chat_interface_page_refresh():
     socketio.emit('chat_log', chat_log)
     socketio.emit('umrf_feedback_data', umrf_feedback_data)
+    socketio.emit('debug_mode', debug_mode)
     return jsonify({"message": "Chat interface refreshed", "chat_log": chat_log}), 200
 
 
@@ -215,9 +226,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--runtime', action='store_true', help='Enable run-time task monitoring.')
+    parser.add_argument('--debug', action='store_true', help='Enable debug messages in the chat interface.')
     args, unknown = parser.parse_known_args()
 
     runtime_enabled = args.runtime
+    debug_mode = args.debug
+
+    if debug_mode:
+        print(" * Debug mode enabled - debug messages will be shown in chat")
 
     if runtime_enabled:
         import ros_interface as ri

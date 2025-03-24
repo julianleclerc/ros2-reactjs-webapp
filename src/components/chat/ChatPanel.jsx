@@ -10,6 +10,7 @@ const ChatPanel = () => {
   const [activeTabs, setActiveTabs] = useState([]);
   const [input, setInput] = useState("");
   const [actorsAwaitingResponse, setActorsAwaitingResponse] = useState([]);
+  const [showDebugMessages, setShowDebugMessages] = useState(false);
 
   // Ref for auto-scrolling the chat log.
   const chatLogRef = useRef(null);
@@ -49,9 +50,17 @@ const ChatPanel = () => {
     socket.on("connect", () => {
       refreshChatInterface();
     });
-    // Cleanup: remove the listener when the component unmounts.
+    
+    // Listen for debug mode status from server
+    socket.on("debug_mode", (isDebugEnabled) => {
+      console.log("Debug mode status from server:", isDebugEnabled);
+      setShowDebugMessages(isDebugEnabled);
+    });
+    
+    // Cleanup: remove the listeners when the component unmounts.
     return () => {
       socket.off("connect");
+      socket.off("debug_mode");
     };
   }, []);
   
@@ -187,6 +196,13 @@ const ChatPanel = () => {
    */
   const handleVoicePrompt = () => alert("Voice Prompt Activated! (🎙️)");
 
+  /**
+   * Toggles debug message visibility
+   */
+  const toggleDebugMessages = () => {
+    setShowDebugMessages(!showDebugMessages);
+  };
+
   // Combine messages from all selected actors, remove duplicates, and sort them chronologically.
   let combinedMessages = [];
   if (activeTabs.length > 0) {
@@ -202,10 +218,18 @@ const ChatPanel = () => {
       seen.add(key);
       return true;
     });
+    
+    // Filter out debug messages if showDebugMessages is false
+    if (!showDebugMessages) {
+      combinedMessages = combinedMessages.filter((msg) => {
+        // Don't show messages from user "debug"
+        return msg[1] !== "debug";
+      });
+    }
+    
     // Sort by timestamp (assuming the first element is a valid timestamp).
     combinedMessages.sort((a, b) => new Date(a[0]) - new Date(b[0]));
   }
-
 
   // Helper function to get tab class including response-waiting state 
   const getTabClass = (actor) => {
@@ -246,6 +270,13 @@ const ChatPanel = () => {
               </button>
             ))}
           </div>
+          <button 
+            className={`debug-toggle-button ${showDebugMessages ? 'debug-active' : ''}`} 
+            onClick={toggleDebugMessages}
+            title="Toggle Debug Messages"
+          >
+            {showDebugMessages ? "🐞 On" : "🐞 Off"}
+          </button>
         </div>
 
         {/* Chat Log */}
@@ -254,9 +285,11 @@ const ChatPanel = () => {
             combinedMessages.map((chat, idx) => {
               // Each chat entry is in the form [timestamp, user, message].
               const [timestamp, user, message] = chat;
+              const messageClass = `chat-message ${user === "debug" ? "debug-type" : ""}`;
+              
               return (
-                <p key={idx} className="chat-message">
-                  <span className="chat-timestamp">{timestamp}</span>{" "}
+                <p key={idx} className={messageClass}>
+                  {showDebugMessages && <span className="chat-timestamp">{timestamp}</span>}{" "}
                   <strong>{user}:</strong> {message}
                 </p>
               );
