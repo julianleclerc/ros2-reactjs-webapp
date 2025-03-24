@@ -6,6 +6,7 @@ import argparse
 import os
 import json
 import time
+import subprocess
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -80,16 +81,58 @@ def generate_action():
     try:
         action_data = request.json
         action_name = action_data['name']
+
+        # Add package generation logic
+        # Paths for generation
+        umrf_json_path = 'example_actions/'+f'{action_name}.umrf.json'
+        templates_path = 'package_generator/templates'  # Adjust this path as needed
+        output_path = 'generated_actions'  # Directory to store generated packages
+        framework = 'ROS2'  # Or 'CMake' depending on your preference
+
+        print(f'umrf_json_path: {umrf_json_path}')
+        print(f'templates_path: {templates_path}')
+        print(f'output_path: {output_path}')
+        print(f'framework: {framework}')
+
+        # Write the action data to a JSON file
+        os.makedirs('example_actions', exist_ok=True)
+        with open('example_actions/'+f'{action_name}.umrf.json', 'w') as f:
+            json.dump(action_data, f, indent=4)
+        
+        # Ensure output directory exists
+        os.makedirs("generated_actions", exist_ok=True)
+
+        # Call the package generation script
+        result = subprocess.run([
+            'python3', 
+            'package_generator/scripts/generate_package.py', 
+            '--umrf-json', umrf_json_path,
+            '--templates', templates_path,
+            '--output', output_path,
+            '--framework', framework
+        ], capture_output=True, text=True)
+
+
+        # Check if the subprocess was successful
+        if result.returncode != 0:
+            print("Error generating package:")
+            print(result.stderr)
+            return jsonify({'error': 'Failed to generate package', 'details': result.stderr}), 500
+
         action_data['status'] = 'package'
-        print (f'Generating action: {action_data}')
+        print(f'Generating action: {action_data}')
 
         actions[action_name] = action_data
         
         actions_list = list(actions.values())
         socketio.emit('actions', actions_list)
     
-        return jsonify({'message': f'Action {action_name} created successfully'}), 200
+        return jsonify({
+            'message': f'Action {action_name} created successfully', 
+            'package_path': os.path.join(output_path, action_name.lower())
+        }), 200
     except Exception as e:
+        print(f'Error generating action: {e}')
         return jsonify({'error': str(e)}), 400
 
 @socketio.on('connect')
