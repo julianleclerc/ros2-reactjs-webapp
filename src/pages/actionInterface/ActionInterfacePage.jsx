@@ -179,8 +179,13 @@ const ActionInterfacePage = () => {
             graph_description: "Newly created graph",
             graph_entry: [],
             graph_exit: [],
-            actions: []
+            actions: [],
+            gui_attributes: {
+                status: 'draft'
+            }
         };
+
+        console.log("starting newGraph: ", newGraph);
 
         try {
             const response = await fetch('http://localhost:4000/api/graphs', {
@@ -190,6 +195,8 @@ const ActionInterfacePage = () => {
                 },
                 body: JSON.stringify(newGraph)
             });
+
+            console.log("response: ", response);
 
             if (!response.ok) {
                 throw new Error('Failed to create graph in backend');

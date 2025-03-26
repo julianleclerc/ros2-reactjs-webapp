@@ -7,7 +7,7 @@ import os
 import json
 import time
 import subprocess
-from package_generator.scripts.generate_package import generate_package
+from package_generator.scripts.generate_package import generate_package, save_graph
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -61,19 +61,26 @@ def create_graph():
     global graphs
     try:
         graph_data = request.json
-        graph_data['gui_attributes']['status'] = 'generated'
+        graph_data['gui_attributes']['status'] = 'saved'
 
         print (f'Creating graph: {graph_data}')
+
+        output_path = 'package_generator/saved_graphs'
+        os.makedirs(output_path, exist_ok=True)
+
+        graph_path = save_graph(graph_data, output_path)
+
+        print (f'Graph saved to: {graph_path}')
 
         graph_name = graph_data['graph_name']
         graphs[graph_name] = graph_data
 
-        #add a new field 'status' and set it as 'generated'
         graphs_list = list(graphs.values())
         socketio.emit('graphs', graphs_list)
         
         return jsonify({'message': f'Graph {graph_name} created successfully'}), 200
     except Exception as e:
+        print (f'Error creating graph: {e}')
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/generate-action', methods=['POST']) 

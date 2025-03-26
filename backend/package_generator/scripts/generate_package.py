@@ -4,6 +4,7 @@ import argparse
 import os
 import re
 import shutil
+import sys
 
 # Define the JSON-to-C++ type mapping
 TYPE_MAPPING = {
@@ -117,30 +118,25 @@ def generate_set_output_param(json_data):
     process_object(json_data)
     return lines
 
-def main():
-
-    # Create the argument parser
-    parser = argparse.ArgumentParser(description="Action package generator.")
-
-    # Add arguments
-    parser.add_argument("--umrf-json", type=str, required=True, help="Path to UMRF JSON.")
-    parser.add_argument("--templates", type=str, required=True, help="Path to jinja templates.")
-    parser.add_argument("--output",    type=str, required=True, help="Path to generated output files.")
-    parser.add_argument("--framework", type=str, required=True, help="CMake or ROS2 project.")
-
-    # Parse the arguments
-    args = parser.parse_args()
-
-     # Load the JSON
-    json_data = None
-
-    with open(args.umrf_json) as f:
+def generate_package(umrf_json_path, templates_path, output_path, framework):
+    """
+    Generate a package based on the UMRF JSON configuration.
+    
+    Args:
+        umrf_json_path (str): Path to the UMRF JSON file
+        templates_path (str): Path to Jinja2 templates
+        output_path (str): Path to generate output files
+        framework (str): Framework type ('CMake' or 'ROS2')
+    
+    Returns:
+        str: Path to the generated package base directory
+    """
+    # Load the JSON
+    with open(umrf_json_path) as f:
         json_data = json.load(f)
 
-    #
     # Create directories
-    #
-    gen_path_base = os.path.join(args.output, camel_to_snake(json_data["name"]))
+    gen_path_base = os.path.join(output_path, camel_to_snake(json_data["name"]))
     gen_path_src = os.path.join(gen_path_base, 'src')
     gen_path_include = os.path.join(gen_path_base, 'include', camel_to_snake(json_data["name"]))
 
@@ -150,38 +146,32 @@ def main():
     if not os.path.exists(gen_path_include):
         os.makedirs(gen_path_include)
 
-    #
     # Copy the UMRF JSON file
-    #
-    shutil.copyfile(args.umrf_json, os.path.join(gen_path_base, camel_to_snake(json_data["name"])) + '.umrf.json')
+    shutil.copyfile(umrf_json_path, os.path.join(gen_path_base, camel_to_snake(json_data["name"])) + '.umrf.json')
 
-    #
     # Load jinja templates
-    #
-    templateLoader = jinja2.FileSystemLoader(searchpath=args.templates)
+    templateLoader = jinja2.FileSystemLoader(searchpath=templates_path)
     templateEnv = jinja2.Environment(loader=templateLoader, trim_blocks=True, lstrip_blocks=True)
 
-    template_structs            = templateEnv.get_template('param_structs.jinja')
-    template_temoto_action      = templateEnv.get_template('temoto_action.jinja')
+    # Select templates based on framework
+    template_structs = templateEnv.get_template('param_structs.jinja')
+    template_temoto_action = templateEnv.get_template('temoto_action.jinja')
     template_temoto_action_impl = templateEnv.get_template('temoto_action_impl.jinja')
-    template_cmakelists         = None
-    template_packagexml         = None
+    
+    template_cmakelists = None
+    template_packagexml = None
 
-    if args.framework == "CMake":
+    if framework == "CMake":
         template_cmakelists = templateEnv.get_template('cmakelists.jinja')
-    elif args.framework == "ROS2":
+    elif framework == "ROS2":
         template_cmakelists = templateEnv.get_template('cmakelists_ros2.jinja')
         template_packagexml = templateEnv.get_template('packagexml.jinja')
     else:
-        print (f'Unknown framework "{args.framework}"')
-        exit()
-    #
+        raise ValueError(f'Unknown framework "{framework}"')
+
     # Render input parameter C++ structs
-    #
     gen_input_params = None
-
-    if (json_data.get("input_parameters") is not None):
-
+    if json_data.get("input_parameters") is not None:
         input_structs = generate_cpp_structs(json_data["input_parameters"], "input_parameters_t")
         render_cpp_input_param_structs = template_structs.render(structs=input_structs)
 
@@ -190,13 +180,9 @@ def main():
 
         gen_input_params = generate_get_input_param(json_data["input_parameters"])
 
-    #
     # Render output parameter C++ structs
-    #
     gen_output_params = None
-
-    if (json_data.get("output_parameters") is not None):
-
+    if json_data.get("output_parameters") is not None:
         output_structs = generate_cpp_structs(json_data["output_parameters"], "output_parameters_t")
         render_cpp_output_param_structs = template_structs.render(structs=output_structs)
 
@@ -205,43 +191,79 @@ def main():
 
         gen_output_params = generate_set_output_param(json_data["output_parameters"])
 
-    #
     # Render the temoto_action.hpp
-    #
-    render_temoto_action = template_temoto_action.render( \
-        action_name = camel_to_snake(json_data["name"]),
-        gen_input_params=gen_input_params, \
-        gen_output_params=gen_output_params)
+    render_temoto_action = template_temoto_action.render(
+        action_name=camel_to_snake(json_data["name"]),
+        gen_input_params=gen_input_params,
+        gen_output_params=gen_output_params
+    )
 
     with open(os.path.join(gen_path_include, "temoto_action.hpp"), "w") as f:
         f.write(render_temoto_action)
 
-    #
     # Render the temoto_action_impl.cpp
-    #
-    render_temoto_action_impl = template_temoto_action_impl.render( \
-        action_class_name = json_data["name"], \
-        action_package_name = camel_to_snake(json_data["name"]))
+    render_temoto_action_impl = template_temoto_action_impl.render(
+        action_class_name=json_data["name"],
+        action_package_name=camel_to_snake(json_data["name"])
+    )
 
     with open(os.path.join(gen_path_src, camel_to_snake(json_data["name"]) + ".cpp"), "w") as f:
         f.write(render_temoto_action_impl)
 
-    #
     # Render the CMakeLists.txt
-    #
-    render_cmakelists = template_cmakelists.render(action_package_name = camel_to_snake(json_data["name"]))
+    render_cmakelists = template_cmakelists.render(
+        action_package_name=camel_to_snake(json_data["name"])
+    )
 
     with open(os.path.join(gen_path_base, "CMakeLists.txt"), "w") as f:
         f.write(render_cmakelists)
 
-    #
     # Render package.xml
-    #
     if template_packagexml is not None:
-        render_packagexml = template_packagexml.render(action_package_name = camel_to_snake(json_data["name"]))
+        render_packagexml = template_packagexml.render(
+            action_package_name=camel_to_snake(json_data["name"])
+        )
 
         with open(os.path.join(gen_path_base, "package.xml"), "w") as f:
             f.write(render_packagexml)
+
+    return gen_path_base
+
+def save_graph(graph_data, output_path):
+    '''
+    Save the graph data to the output path
+    '''
+
+    graph_name = graph_data["graph_name"]
+
+    print (f'Saving graph to: {os.path.join(output_path, f"{graph_name}.umrf.graph.json")}')
+
+    os.makedirs(output_path, exist_ok=True)
+    with open(os.path.join(output_path, f"{graph_name}.umrf.graph.json"), "w") as f:
+        json.dump(graph_data, f, indent=4)
+    
+    return output_path
+
+def main():
+    # Create the argument parser
+    parser = argparse.ArgumentParser(description="Action package generator.")
+
+    # Add arguments
+    parser.add_argument("--umrf-json", type=str, required=True, help="Path to UMRF JSON.")
+    parser.add_argument("--templates", type=str, required=True, help="Path to jinja templates.")
+    parser.add_argument("--output", type=str, required=True, help="Path to generated output files.")
+    parser.add_argument("--framework", type=str, required=True, help="CMake or ROS2 project.")
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Call the generate_package function with command-line arguments
+    generate_package(
+        umrf_json_path=args.umrf_json,
+        templates_path=args.templates,
+        output_path=args.output,
+        framework=args.framework
+    )
 
 if __name__ == "__main__":
     main()
