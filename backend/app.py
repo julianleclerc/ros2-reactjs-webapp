@@ -90,7 +90,7 @@ def generate_action():
         action_data = request.json
         action_name = action_data['name']
 
-        umrf_json_path = 'example_actions/'+f'{action_name}.umrf.json'
+        umrf_json_path = 'package_generator/saved_actions/'+f'{action_name}.umrf.json'
         templates_path = 'package_generator/templates'
         output_path = 'package_generator/generated_actions'
         framework = 'ROS2'
@@ -100,8 +100,8 @@ def generate_action():
         print(f'output_path: {output_path}')
         print(f'framework: {framework}')
 
-        os.makedirs('example_actions', exist_ok=True)
-        with open('example_actions/'+f'{action_name}.umrf.json', 'w') as f:
+        os.makedirs('package_generator/saved_actions', exist_ok=True)
+        with open('package_generator/saved_actions/'+f'{action_name}.umrf.json', 'w') as f:
             json.dump(action_data, f, indent=4)
         
         os.makedirs(output_path, exist_ok=True)
@@ -124,7 +124,6 @@ def generate_action():
     
         return jsonify({
             'message': f'Action {action_name} created successfully', 
-            'package_path': package_path
         }), 200
     except Exception as e:
         print(f'Error generating action: {e}')
